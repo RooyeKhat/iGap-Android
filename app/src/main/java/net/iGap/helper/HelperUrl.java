@@ -29,10 +29,15 @@ import android.text.TextPaint;
 import android.text.style.ClickableSpan;
 import android.view.View;
 import android.widget.TextView;
-
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
-
+import io.realm.Realm;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import net.iGap.G;
 import net.iGap.R;
 import net.iGap.fragments.FragmentChat;
@@ -52,17 +57,7 @@ import net.iGap.realm.RealmRoomFields;
 import net.iGap.request.RequestClientCheckInviteLink;
 import net.iGap.request.RequestClientJoinByInviteLink;
 import net.iGap.request.RequestClientResolveUsername;
-
 import org.chromium.customtabsclient.CustomTabsActivityHelper;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-import io.realm.Realm;
-import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 
 import static net.iGap.proto.ProtoGlobal.Room.Type.GROUP;
 
@@ -77,10 +72,13 @@ public class HelperUrl {
         chat, profile
     }
 
-    public static int LinkColor = Color.GRAY;
-    public static String igapSite2 = "igap.net/";
+    public static int LinkColor = Color.BLUE;
     public static MaterialDialog dialogWaiting;
     public static String igapResolve = "igap://resolve?";
+
+    private static boolean isIgapLink(String text) {
+        return text.matches("(https?\\:\\/\\/)?igap.net/(.*)");
+    }
 
     public static SpannableStringBuilder setUrlLink(String text, boolean withClickable, boolean withHash, String messageID, boolean withAtSign) {
 
@@ -104,7 +102,7 @@ public class HelperUrl {
 
             String str = list[i];
 
-            if (str.contains(igapSite2)) {
+            if (isIgapLink(str)) {
                 insertIgapLink(strBuilder, count, count + str.length());
             } else if (str.contains(igapResolve)) {
                 insertIgapResolveLink(strBuilder, count, count + str.length());
@@ -187,6 +185,7 @@ public class HelperUrl {
             public void updateDrawState(TextPaint ds) {
                 ds.linkColor = LinkColor;
                 super.updateDrawState(ds);
+                ds.setUnderlineText(false);
             }
         };
 
@@ -248,6 +247,7 @@ public class HelperUrl {
             public void updateDrawState(TextPaint ds) {
                 ds.linkColor = LinkColor;
                 super.updateDrawState(ds);
+                ds.setUnderlineText(false);
             }
         };
 
@@ -278,6 +278,7 @@ public class HelperUrl {
             public void updateDrawState(TextPaint ds) {
                 ds.linkColor = LinkColor;
                 super.updateDrawState(ds);
+                ds.setUnderlineText(false);
             }
         };
 
@@ -345,6 +346,7 @@ public class HelperUrl {
             public void updateDrawState(TextPaint ds) {
                 ds.linkColor = LinkColor;
                 super.updateDrawState(ds);
+                ds.setUnderlineText(false);
             }
         };
 
@@ -416,6 +418,7 @@ public class HelperUrl {
             public void updateDrawState(TextPaint ds) {
                 ds.linkColor = LinkColor;
                 super.updateDrawState(ds);
+                ds.setUnderlineText(false);
             }
         };
 
@@ -491,7 +494,7 @@ public class HelperUrl {
 
             String str = list[i];
 
-            if (str.contains(igapSite2)) {
+            if (isIgapLink(str)) {
                 linkInfo += count + "_" + (count + str.length()) + "_" + linkType.igapLink.toString() + "@";
             } else if (str.contains(igapResolve)) {
                 linkInfo += count + "_" + (count + str.length()) + "_" + linkType.igapResolve.toString() + "@";
@@ -712,7 +715,15 @@ public class HelperUrl {
     }
 
     public static void closeDialogWaiting() {
-        if (dialogWaiting != null) if (dialogWaiting.isShowing()) dialogWaiting.dismiss();
+        try {
+            if (dialogWaiting != null && dialogWaiting.isShowing() && !(G.currentActivity).isFinishing()) {
+                dialogWaiting.dismiss();
+            }
+        } catch (RuntimeException e) {
+            e.printStackTrace();
+        } catch (Exception e1) {
+            e1.printStackTrace();
+        }
     }
 
     private static void openChat(String username, ProtoClientResolveUsername.ClientResolveUsernameResponse.Type type, ProtoGlobal.RegisteredUser user, ProtoGlobal.Room room, ChatEntry chatEntery) {
@@ -782,14 +793,16 @@ public class HelperUrl {
                     public void run() {
                         if (dialogWaiting != null && dialogWaiting.isShowing()) {
 
-                        } else {
+                        } else if (!(G.currentActivity).isFinishing()) {
                             dialogWaiting = new MaterialDialog.Builder(G.currentActivity).title("").content(R.string.please_wait).progress(true, 0).cancelable(false).progressIndeterminateStyle(false).show();
                         }
                     }
                 });
             }
-        } catch (Exception e) {
+        } catch (RuntimeException e) {
             e.printStackTrace();
+        } catch (Exception e1) {
+            e1.printStackTrace();
         }
     }
 
@@ -925,7 +938,7 @@ public class HelperUrl {
     private static void getToRoom(Uri path) {
 
         if (path != null) {
-            if (path.toString().toLowerCase().contains(igapSite2)) {
+            if (isIgapLink(path.toString().toLowerCase())) {
 
                 String url = path.toString();
                 int index = url.lastIndexOf("/");

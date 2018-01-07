@@ -1,19 +1,22 @@
 package net.iGap.module;
 
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.os.Environment;
 import android.util.DisplayMetrics;
 import android.view.WindowManager;
-
 import com.nostra13.universalimageloader.core.DisplayImageOptions;
 import com.nostra13.universalimageloader.core.ImageLoader;
 import com.nostra13.universalimageloader.core.ImageLoaderConfiguration;
 import com.vanniktech.emoji.EmojiManager;
 import com.vanniktech.emoji.one.EmojiOneProvider;
-
+import io.realm.DynamicRealm;
+import io.realm.Realm;
+import io.realm.RealmConfiguration;
+import java.io.File;
+import java.io.IOException;
+import java.util.Locale;
 import net.iGap.Config;
 import net.iGap.G;
 import net.iGap.R;
@@ -23,20 +26,11 @@ import net.iGap.helper.HelperCalander;
 import net.iGap.helper.HelperDownloadFile;
 import net.iGap.helper.HelperFillLookUpClass;
 import net.iGap.helper.HelperNotificationAndBadge;
-import net.iGap.helper.HelperPermision;
+import net.iGap.helper.HelperPermission;
 import net.iGap.helper.HelperUploadFile;
-import net.iGap.helper.MyServiceTemporat;
 import net.iGap.realm.RealmMigration;
 import net.iGap.realm.RealmUserInfo;
 import net.iGap.webrtc.CallObserver;
-
-import java.io.File;
-import java.io.IOException;
-import java.util.Locale;
-
-import io.realm.DynamicRealm;
-import io.realm.Realm;
-import io.realm.RealmConfiguration;
 import uk.co.chrisjenx.calligraphy.CalligraphyConfig;
 
 import static android.content.Context.MODE_PRIVATE;
@@ -139,15 +133,6 @@ public final class StartupActions {
         headerTextColor = preferences.getString(SHP_SETTING.KEY_FONT_HEADER_COLOR, Config.default_headerTextColor);
         G.progressColor = preferences.getString(SHP_SETTING.KEY_PROGRES_COLOR, Config.default_progressColor);
         G.multiTab = preferences.getBoolean(SHP_SETTING.KEY_MULTI_TAB, false);
-
-        /**
-         * start background app service
-         */
-        int isStart = preferences.getInt(SHP_SETTING.KEY_STNS_KEEP_ALIVE_SERVICE, 1);
-        if (isStart == 1) {
-            Intent intent = new Intent(context, MyServiceTemporat.class);
-            context.startService(intent);
-        }
 
         // setting for show layout vote in channel
         G.showVoteChannelLayout = preferences.getInt(SHP_SETTING.KEY_VOTE, 1) == 1;
@@ -264,7 +249,7 @@ public final class StartupActions {
     private static void manageAppDirectories() {
         String rootPath = getCacheDir().getPath();
 
-        if (!HelperPermision.grantedUseStorage()) {
+        if (!HelperPermission.grantedUseStorage()) {
             DIR_IMAGES = rootPath + G.IMAGES;
             DIR_VIDEOS = rootPath + G.VIDEOS;
             DIR_AUDIOS = rootPath + G.AUDIOS;

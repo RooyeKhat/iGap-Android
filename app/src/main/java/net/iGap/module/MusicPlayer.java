@@ -44,7 +44,13 @@ import android.view.View;
 import android.widget.LinearLayout;
 import android.widget.RemoteViews;
 import android.widget.TextView;
-
+import io.realm.Realm;
+import io.realm.RealmResults;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.Random;
+import java.util.Timer;
+import java.util.TimerTask;
 import net.iGap.G;
 import net.iGap.R;
 import net.iGap.activities.ActivityMain;
@@ -53,6 +59,7 @@ import net.iGap.fragments.FragmentMediaPlayer;
 import net.iGap.helper.HelperCalander;
 import net.iGap.helper.HelperDownloadFile;
 import net.iGap.helper.HelperLog;
+import net.iGap.interfaces.OnAudioFocusChangeListener;
 import net.iGap.interfaces.OnComplete;
 import net.iGap.proto.ProtoFileDownload;
 import net.iGap.proto.ProtoGlobal;
@@ -61,18 +68,9 @@ import net.iGap.realm.RealmRoom;
 import net.iGap.realm.RealmRoomMessage;
 import net.iGap.realm.RealmRoomMessageFields;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Random;
-import java.util.Timer;
-import java.util.TimerTask;
-
-import io.realm.Realm;
-import io.realm.RealmResults;
-
 import static net.iGap.G.context;
 
-public class MusicPlayer extends Service {
+public class MusicPlayer extends Service implements AudioManager.OnAudioFocusChangeListener, OnAudioFocusChangeListener {
 
     private static SensorManager mSensorManager;
     private static Sensor mProximity;
@@ -80,6 +78,7 @@ public class MusicPlayer extends Service {
     private static final int SENSOR_SENSITIVITY = 4;
     public static boolean canDoAction = true;
     private static MediaSessionCompat mSession;
+    private static int latestAudioFocusState;
     //    private static Bitmap orginalWallPaper = null;
     //    private static boolean isGetOrginalWallpaper=false;
 
@@ -127,6 +126,7 @@ public class MusicPlayer extends Service {
     private static int stateHedset = 0;
 
     public static boolean playNextMusic = false;
+    private static boolean pauseOnAudioFocusChange;
 
     public static String STARTFOREGROUND_ACTION = "STARTFOREGROUND_ACTION";
     public static String STOPFOREGROUND_ACTION = "STOPFOREGROUND_ACTION";
@@ -162,6 +162,8 @@ public class MusicPlayer extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
 
+        G.onAudioFocusChangeListener = this;
+
         if (intent == null || intent.getExtras() == null) {
             stopForeground(true);
             stopSelf();
@@ -174,9 +176,12 @@ public class MusicPlayer extends Service {
 
                     if (notification != null) {
                         startForeground(notificationId, notification);
-
-                        initSensor();
+                        if (latestAudioFocusState != AudioManager.AUDIOFOCUS_GAIN) { // if do double "AUDIOFOCUS_GAIN", "AUDIOFOCUS_LOSS" will be called
+                            latestAudioFocusState = AudioManager.AUDIOFOCUS_GAIN;
+                            registerAudioFocus(AudioManager.AUDIOFOCUS_GAIN);
+                        }
                     }
+                    initSensor();
                 } else if (action.equals(STOPFOREGROUND_ACTION)) {
 
                     removeSensor();
@@ -190,10 +195,19 @@ public class MusicPlayer extends Service {
         return START_STICKY;
     }
 
+    private void registerAudioFocus(int audioState) {
+        AudioManager audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+        if (audioManager != null) {
+            audioManager.requestAudioFocus(this, AudioManager.STREAM_MUSIC, audioState);
+        }
+    }
+
     public static void setMusicPlayer(LinearLayout layoutTripMusic) {
 
-        if (remoteViews == null) remoteViews = new RemoteViews(context.getPackageName(), R.layout.music_layout_notification);
-        if (notificationManager == null) notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
+        if (remoteViews == null)
+            remoteViews = new RemoteViews(context.getPackageName(), R.layout.music_layout_notification);
+        if (notificationManager == null)
+            notificationManager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
 
         if (layoutTripMusic != null) {
             layoutTripMusic.setVisibility(View.GONE);
@@ -390,7 +404,8 @@ public class MusicPlayer extends Service {
 
     private static void updateFastAdapter(String messageId) {
 
-        if (FragmentMediaPlayer.fastItemAdapter != null) FragmentMediaPlayer.fastItemAdapter.notifyAdapterItemChanged(FragmentMediaPlayer.fastItemAdapter.getPosition(Long.parseLong(messageId)));
+        if (FragmentMediaPlayer.fastItemAdapter != null)
+            FragmentMediaPlayer.fastItemAdapter.notifyAdapterItemChanged(FragmentMediaPlayer.fastItemAdapter.getPosition(Long.parseLong(messageId)));
 
     }
 
@@ -402,10 +417,12 @@ public class MusicPlayer extends Service {
             return;
         }
 
-
-
         if (mp.isPlaying()) {
             return;
+        }
+
+        if (G.onAudioFocusChangeListener != null) {
+            G.onAudioFocusChangeListener.onAudioFocusChangeListener(AudioManager.AUDIOFOCUS_GAIN);
         }
 
         if (!isVoice) {
@@ -920,51 +937,49 @@ public class MusicPlayer extends Service {
     }
 
     private static void updateNotification() {
-        if (isVoice) { // don't show notification for voice
-            return;
+        if (!isVoice) {
+            getMusicInfo();
+
+            Intent intentFragmentMusic = new Intent(context, ActivityMain.class);
+            intentFragmentMusic.putExtra(ActivityMain.openMediaPlyer, true);
+
+            PendingIntent pi = PendingIntent.getActivity(context, 555, intentFragmentMusic, PendingIntent.FLAG_UPDATE_CURRENT);
+
+            remoteViews.setTextViewText(R.id.mln_txt_music_name, MusicPlayer.musicName);
+            remoteViews.setTextViewText(R.id.mln_txt_music_outher, MusicPlayer.musicInfoTitle);
+
+            //if (mp != null) {
+            //    if (mp.isPlaying()) {
+            remoteViews.setImageViewResource(R.id.mln_btn_play_music, R.mipmap.pause_button);
+            //    } else {
+            //        remoteViews.setImageViewResource(R.id.mln_btn_play_music, R.mipmap.play_button);
+            //    }
+            //}
+
+            Intent intentPrevious = new Intent(context, customButtonListener.class);
+            intentPrevious.putExtra("mode", "previous");
+            PendingIntent pendingIntentPrevious = PendingIntent.getBroadcast(context, 1, intentPrevious, 0);
+            remoteViews.setOnClickPendingIntent(R.id.mln_btn_Previous_music, pendingIntentPrevious);
+
+            Intent intentPlayPause = new Intent(context, customButtonListener.class);
+            intentPlayPause.putExtra("mode", "play");
+            PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(context, 2, intentPlayPause, 0);
+            remoteViews.setOnClickPendingIntent(R.id.mln_btn_play_music, pendingIntentPlayPause);
+
+            Intent intentforward = new Intent(context, customButtonListener.class);
+            intentforward.putExtra("mode", "forward");
+            PendingIntent pendingIntentforward = PendingIntent.getBroadcast(context, 3, intentforward, 0);
+            remoteViews.setOnClickPendingIntent(R.id.mln_btn_forward_music, pendingIntentforward);
+
+            Intent intentClose = new Intent(context, customButtonListener.class);
+            intentClose.putExtra("mode", "close");
+            PendingIntent pendingIntentClose = PendingIntent.getBroadcast(context, 4, intentClose, 0);
+            remoteViews.setOnClickPendingIntent(R.id.mln_btn_close, pendingIntentClose);
+
+            notification = new NotificationCompat.Builder(context.getApplicationContext()).setTicker("music").setSmallIcon(R.mipmap.j_mp3).setContentTitle(musicName)
+                //  .setContentText(place)
+                .setContent(remoteViews).setContentIntent(pi).setDeleteIntent(pendingIntentClose).setAutoCancel(false).setOngoing(true).build();
         }
-
-        getMusicInfo();
-
-        Intent intentFragmentMusic = new Intent(context, ActivityMain.class);
-        intentFragmentMusic.putExtra(ActivityMain.openMediaPlyer, true);
-
-        PendingIntent pi = PendingIntent.getActivity(context, 555, intentFragmentMusic, PendingIntent.FLAG_UPDATE_CURRENT);
-
-        remoteViews.setTextViewText(R.id.mln_txt_music_name, MusicPlayer.musicName);
-        remoteViews.setTextViewText(R.id.mln_txt_music_outher, MusicPlayer.musicInfoTitle);
-
-        //if (mp != null) {
-        //    if (mp.isPlaying()) {
-        remoteViews.setImageViewResource(R.id.mln_btn_play_music, R.mipmap.pause_button);
-        //    } else {
-        //        remoteViews.setImageViewResource(R.id.mln_btn_play_music, R.mipmap.play_button);
-        //    }
-        //}
-
-        Intent intentPrevious = new Intent(context, customButtonListener.class);
-        intentPrevious.putExtra("mode", "previous");
-        PendingIntent pendingIntentPrevious = PendingIntent.getBroadcast(context, 1, intentPrevious, 0);
-        remoteViews.setOnClickPendingIntent(R.id.mln_btn_Previous_music, pendingIntentPrevious);
-
-        Intent intentPlayPause = new Intent(context, customButtonListener.class);
-        intentPlayPause.putExtra("mode", "play");
-        PendingIntent pendingIntentPlayPause = PendingIntent.getBroadcast(context, 2, intentPlayPause, 0);
-        remoteViews.setOnClickPendingIntent(R.id.mln_btn_play_music, pendingIntentPlayPause);
-
-        Intent intentforward = new Intent(context, customButtonListener.class);
-        intentforward.putExtra("mode", "forward");
-        PendingIntent pendingIntentforward = PendingIntent.getBroadcast(context, 3, intentforward, 0);
-        remoteViews.setOnClickPendingIntent(R.id.mln_btn_forward_music, pendingIntentforward);
-
-        Intent intentClose = new Intent(context, customButtonListener.class);
-        intentClose.putExtra("mode", "close");
-        PendingIntent pendingIntentClose = PendingIntent.getBroadcast(context, 4, intentClose, 0);
-        remoteViews.setOnClickPendingIntent(R.id.mln_btn_close, pendingIntentClose);
-
-        notification = new NotificationCompat.Builder(context.getApplicationContext()).setTicker("music").setSmallIcon(R.mipmap.j_mp3).setContentTitle(musicName)
-            //  .setContentText(place)
-            .setContent(remoteViews).setContentIntent(pi).setDeleteIntent(pendingIntentClose).setAutoCancel(false).setOngoing(true).build();
 
         Intent intent = new Intent(context, MusicPlayer.class);
         intent.putExtra("ACTION", STARTFOREGROUND_ACTION);
@@ -987,7 +1002,7 @@ public class MusicPlayer extends Service {
                         try {
                             if (roomMessage.getAttachment().getLocalFilePath() != null) {
                                 if (new File(roomMessage.getAttachment().getLocalFilePath()).exists()) {
-                                    mediaList.add(realmRoomMessage);
+                                    mediaList.add(roomMessage);
                                 }
                             }
                         } catch (Exception e) {
@@ -999,8 +1014,7 @@ public class MusicPlayer extends Service {
                         try {
                             if (roomMessage.getAttachment().getLocalFilePath() != null) {
                                 if (new File(roomMessage.getAttachment().getLocalFilePath()).exists()) {
-                                    Log.i("FFFFFFFFFFFF", "8888onB: " + realmRoomMessage.getAttachment().getLocalFilePath());
-                                    mediaList.add(0, realmRoomMessage);
+                                    mediaList.add(roomMessage);
                                 }
                             }
                         } catch (Exception e) {
@@ -1184,6 +1198,28 @@ public class MusicPlayer extends Service {
         SharedPreferences sharedPreferences = context.getSharedPreferences("MusicSetting", context.MODE_PRIVATE);
         repeatMode = sharedPreferences.getString("RepeatMode", RepeatMode.noRepeat.toString());
         isShuffelOn = sharedPreferences.getBoolean("Shuffel", false);
+    }
+
+    @Override
+    public void onAudioFocusChange(int focusChange) {
+        latestAudioFocusState = focusChange;
+        if (focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT || focusChange == AudioManager.AUDIOFOCUS_LOSS) {
+            pauseOnAudioFocusChange = true;
+            pauseSound();
+        } else if (focusChange == AudioManager.AUDIOFOCUS_GAIN) {
+            if (pauseOnAudioFocusChange) {
+                pauseOnAudioFocusChange = false;
+                //playSound(); // commented this line because after receive incoming call and end call, this listener will be called and sound will be played!!!
+            }
+        }
+    }
+
+    @Override
+    public void onAudioFocusChangeListener(int audioState) {
+        if (latestAudioFocusState != audioState) {
+            latestAudioFocusState = audioState;
+            registerAudioFocus(audioState);
+        }
     }
 
     public enum RepeatMode {
@@ -1486,7 +1522,7 @@ public class MusicPlayer extends Service {
 
                     PlaybackStateCompat state = new PlaybackStateCompat.Builder().setActions(PlaybackStateCompat.ACTION_STOP | PlaybackStateCompat.ACTION_PAUSE | PlaybackStateCompat.ACTION_PLAY | PlaybackStateCompat.ACTION_PLAY_PAUSE | PlaybackStateCompat.ACTION_SKIP_TO_NEXT | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS)
 
-                        .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime()).build();
+                            .setState(PlaybackStateCompat.STATE_PLAYING, 0, 1, SystemClock.elapsedRealtime()).build();
                     mSession.setPlaybackState(state);
                 } catch (Exception e) {
 
