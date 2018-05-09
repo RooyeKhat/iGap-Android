@@ -218,7 +218,7 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
         String pathName = "";
         Bitmap bitmap = null;
         Realm realm = Realm.getDefaultInstance();
-        for (RealmAvatar avatar : realm.where(RealmAvatar.class).equalTo(RealmAvatarFields.OWNER_ID, userId).findAllSorted(RealmAvatarFields.ID, Sort.DESCENDING)) {
+        for (RealmAvatar avatar : realm.where(RealmAvatar.class).equalTo(RealmAvatarFields.OWNER_ID, userId).findAll().sort(RealmAvatarFields.ID, Sort.DESCENDING)) {
             if (avatar.getFile() != null) {
                 pathName = avatar.getFile().getLocalFilePath();
                 if (pathName == null) {
@@ -512,7 +512,7 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
         map.setTileSource(new OnlineTileSourceBase("USGS Topo", ZOOM_LEVEL_MIN, ZOOM_LEVEL_MAX, 256, ".png", new String[]{url}) {
             @Override
             public String getTileURLString(MapTile aTile) {
-                return getBaseUrl() + aTile.getZoomLevel() + "/" + aTile.getX() + "/" + aTile.getY() + mImageFilenameEnding;
+                return "http://mt1.google.com/vt/lyrs=m&hl=fa&x=" + aTile.getX() + "&y=" + aTile.getY() + "&z=" + aTile.getZoomLevel();
             }
         });
 
@@ -596,8 +596,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
         prgWaitingSendMessage = (ProgressBar) view.findViewById(R.id.prgWaitSendMessage);
         txtSendMessageGps = (TextView) view.findViewById(R.id.txtSendMessageGps);
         txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
-
+        if (G.isDarkTheme) {
+            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+        } else {
+            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+        }
         G.onGeoCommentResponse = new OnGeoCommentResponse() {
             @Override
             public void commentResponse() {
@@ -614,7 +617,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                         }
                         prgWaitingSendMessage.setVisibility(View.GONE);
                         txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        if (G.isDarkTheme) {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                        } else {
+                            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        }
                         edtMessageGps.setEnabled(true);
                     }
                 });
@@ -629,7 +636,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                         txtSendMessageGps.setVisibility(View.VISIBLE);
                         prgWaitingSendMessage.setVisibility(View.GONE);
                         txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        if (G.isDarkTheme) {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                        } else {
+                            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        }
                         edtMessageGps.setEnabled(true);
                     }
                 });
@@ -643,7 +654,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
 
                         txtSendMessageGps.setVisibility(View.VISIBLE);
                         txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        if (G.isDarkTheme) {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                        } else {
+                            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        }
                         prgWaitingSendMessage.setVisibility(View.GONE);
                         edtMessageGps.setEnabled(true);
                     }
@@ -665,7 +680,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                             edtMessageGps.setText("");
                             txtSendMessageGps.setVisibility(View.GONE);
                             txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                            if (G.isDarkTheme) {
+                                txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                            } else {
+                                txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                            }
 
                         }
                     }).negativeText(R.string.st_dialog_reset_all_notification_no).onNegative(new MaterialDialog.SingleButtonCallback() {
@@ -730,11 +749,19 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                     if (!txtComment.equals(s.toString())) {
                         txtSendMessageGps.setVisibility(View.VISIBLE);
                         txtSendMessageGps.setText(G.context.getString(R.string.md_igap_check));
-                        txtSendMessageGps.setTextColor(Color.parseColor(G.appBarColor));
+                        if (G.isDarkTheme) {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                        } else {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.appBarColor));
+                        }
                     } else {
                         txtSendMessageGps.setVisibility(View.VISIBLE);
                         txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        if (G.isDarkTheme) {
+                            txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                        } else {
+                            txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                        }
                     }
                 } else {
                     txtSendMessageGps.setVisibility(View.GONE);
@@ -1038,7 +1065,7 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                     }
                 }
             }
-        }, GET_NEARBY_DELAY);
+        }, 0);
     }
 
     private void initMapListener() {
@@ -1172,20 +1199,54 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
         //}
     }
 
-    @Override
-    public void onNearbyCoordinate(List<ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse.Result> results) {
-        map.getOverlays().removeAll(markers);
+    private void downloadMarkerAvatar(Realm realm, long userId) {
+        for (RealmAvatar avatar : realm.where(RealmAvatar.class).equalTo(RealmAvatarFields.OWNER_ID, userId).findAll().sort(RealmAvatarFields.ID, Sort.DESCENDING)) {
+            if (avatar.getFile() != null) {
+                String pathName = avatar.getFile().getLocalFilePath();
+                if (pathName == null) {
+                    pathName = avatar.getFile().getLocalThumbnailPath();
+                    if (pathName == null) {
+                        HelperAvatar.getAvatar(G.userId, HelperAvatar.AvatarType.USER, false, new OnAvatarGet() {
+                            @Override
+                            public void onAvatarGet(String avatarPath, long roomId) {
+                            }
 
-        for (final ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse.Result result : results) {
-            if (G.userId != result.getUserId()) { // don't show mine
-                RealmRegisteredInfo.getRegistrationInfo(result.getUserId(), new OnInfo() {
-                    @Override
-                    public void onInfo(RealmRegisteredInfo registeredInfo) {
-                        drawMark(result.getLat(), result.getLon(), result.getHasComment(), result.getUserId());
+                            @Override
+                            public void onShowInitials(String initials, String color) {
+                            }
+                        });
                     }
-                });
+                }
+                break;
             }
         }
+
+    }
+
+    @Override
+    public void onNearbyCoordinate(final List<ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse.Result> results) {
+        map.getOverlays().removeAll(markers);
+        Realm realm = Realm.getDefaultInstance();
+        for (final ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse.Result result : results) {
+            downloadMarkerAvatar(realm, result.getUserId());
+        }
+        realm.close();
+
+        G.handler.postDelayed(new Runnable() {
+            @Override
+            public void run() {
+                for (final ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse.Result result : results) {
+                    if (G.userId != result.getUserId()) { // don't show mine
+                        RealmRegisteredInfo.getRegistrationInfo(result.getUserId(), new OnInfo() {
+                            @Override
+                            public void onInfo(RealmRegisteredInfo registeredInfo) {
+                                drawMark(result.getLat(), result.getLon(), result.getHasComment(), result.getUserId());
+                            }
+                        });
+                    }
+                }
+            }
+        }, 2000);
 
         isSendRequestGeoCoordinate = false;
     }
@@ -1314,7 +1375,11 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                 if (G.userId == userIdR && comment.length() > 0) {
                     edtMessageGps.setText(comment);
                     txtSendMessageGps.setText(G.context.getString(R.string.md_close_button));
-                    txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                    if (G.isDarkTheme) {
+                        txtSendMessageGps.setTextColor(Color.parseColor(G.textTitleTheme));
+                    } else {
+                        txtSendMessageGps.setTextColor(G.context.getResources().getColor(R.color.gray_4c));
+                    }
                 } else {
                     txtSendMessageGps.setVisibility(View.GONE);
                 }
@@ -1449,7 +1514,10 @@ public class FragmentiGapMap extends BaseFragment implements OnLocationChanged, 
                 holder.arrow.setText(G.fragmentActivity.getResources().getString(R.string.md_back_arrow));
             }
 
-            holder.arrow.setTextColor(Color.parseColor(G.appBarColor));
+            holder.arrow.setTextColor(Color.parseColor(G.textTitleTheme));
+            holder.comment.setTextColor(Color.parseColor(G.textTitleTheme));
+            holder.distance.setTextColor(Color.parseColor(G.textTitleTheme));
+            holder.username.setTextColor(Color.parseColor(G.textTitleTheme));
 
             holder.layoutMap.setOnClickListener(new View.OnClickListener() {
                 @Override

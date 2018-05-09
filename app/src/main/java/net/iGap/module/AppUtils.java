@@ -263,7 +263,8 @@ public final class AppUtils {
             case DELIVERED:
 
                 setImageDrawable(view, R.drawable.ic_double_check);
-                view.setColorFilter(Color.BLACK);
+//                view.setColorFilter(Color.BLACK);
+                view.setColorFilter(Color.parseColor(G.tintImage), PorterDuff.Mode.SRC_IN);
                 break;
             case FAILED:
                 setImageDrawable(view, R.drawable.ic_error);
@@ -275,11 +276,13 @@ public final class AppUtils {
                 view.setColorFilter(view.getContext().getResources().getColor(R.color.iGapColor));
                 break;
             case SENDING:
-                view.setColorFilter(view.getContext().getResources().getColor(R.color.black_register));
+//                view.setColorFilter(view.getContext().getResources().getColor(R.color.black_register));
+                view.setColorFilter(Color.parseColor(G.tintImage), PorterDuff.Mode.SRC_IN);
                 break;
             case SENT:
                 setImageDrawable(view, R.drawable.ic_check);
-                view.setColorFilter(view.getContext().getResources().getColor(R.color.black_register));
+//                view.setColorFilter(view.getContext().getResources().getColor(R.color.black_register));
+                view.setColorFilter(Color.parseColor(G.tintImage), PorterDuff.Mode.SRC_IN);
                 break;
             default:
                 view.setVisibility(View.GONE);
@@ -504,7 +507,7 @@ public final class AppUtils {
     public static String computeLastMessage(long roomId) {
         Realm realm = Realm.getDefaultInstance();
         String lastMessage = "";
-        RealmResults<RealmRoomMessage> realmList = realm.where(RealmRoomMessage.class).equalTo(RealmRoomMessageFields.ROOM_ID, roomId).findAllSorted(RealmRoomMessageFields.MESSAGE_ID, Sort.DESCENDING);
+        RealmResults<RealmRoomMessage> realmList = realm.where(RealmRoomMessage.class).equalTo(RealmRoomMessageFields.ROOM_ID, roomId).findAll().sort(RealmRoomMessageFields.MESSAGE_ID, Sort.DESCENDING);
         for (RealmRoomMessage realmRoomMessage : realmList) {
             if (realmRoomMessage != null && !realmRoomMessage.isDeleted()) {
                 lastMessage = AppUtils.rightLastMessage(realmRoomMessage);
@@ -608,7 +611,15 @@ public final class AppUtils {
             }
             String filePath = messageInfo.forwardedFrom != null ? messageInfo.forwardedFrom.getAttachment().getLocalFilePath() : messageInfo.attachment.getLocalFilePath();
             if (filePath != null) {
-                intent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(new File(filePath)));
+
+                Uri uri;
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    uri = FileProvider.getUriForFile(context, context.getApplicationContext().getPackageName() + ".provider", new File(filePath));
+                    intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                } else {
+                    uri = Uri.fromFile(new File(filePath));
+                }
+                intent.putExtra(Intent.EXTRA_STREAM, uri);
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,7 +1,6 @@
 package net.iGap.module;
 
 import android.Manifest;
-import android.app.Application;
 import android.content.pm.PackageManager;
 import android.os.AsyncTask;
 import android.support.v4.content.ContextCompat;
@@ -31,7 +30,7 @@ import net.iGap.request.RequestUserLogin;
 import net.iGap.request.RequestUserUpdateStatus;
 import net.iGap.request.RequestWrapper;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import io.realm.Realm;
 
@@ -42,7 +41,7 @@ import static net.iGap.G.isAppInFg;
 /**
  * all actions that need doing after login
  */
-public class LoginActions extends Application {
+public class LoginActions {
 
     public LoginActions() {
         initSecureInterface();
@@ -170,10 +169,10 @@ public class LoginActions extends Application {
         //if (isSendContact) {
         //    return;
         //}
-        Contacts.onlinePhoneContactId = 0;
+
         G.onContactFetchForServer = new OnContactFetchForServer() {
             @Override
-            public void onFetch(ArrayList<StructListOfContact> contacts, boolean getContactList) {
+            public void onFetch(List<StructListOfContact> contacts, boolean getContactList) {
                 RealmPhoneContacts.sendContactList(contacts, false, getContactList);
             }
         };
@@ -188,13 +187,14 @@ public class LoginActions extends Application {
                     G.handler.post(new Runnable() {
                         @Override
                         public void run() {
+                            G.isSendContact = true;
                             new Contacts.FetchContactForServer().executeOnExecutor(AsyncTask.THREAD_POOL_EXECUTOR);
                         }
                     });
                 } else {
                     new RequestUserContactsGetList().userContactGetList();
                 }
-                G.isSendContact = true;
+
             } catch (RuntimeException e) {
                 e.printStackTrace();
             }

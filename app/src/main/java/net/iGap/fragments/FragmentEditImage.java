@@ -3,18 +3,20 @@ package net.iGap.fragments;
 
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.theartofdev.edmodo.cropper.CropImage;
+import com.theartofdev.edmodo.cropper.CropImageView;
 import com.vanniktech.emoji.EmojiPopup;
 import com.vanniktech.emoji.listeners.OnEmojiBackspaceClickListener;
 import com.vanniktech.emoji.listeners.OnEmojiPopupDismissListener;
@@ -41,7 +43,7 @@ import static net.iGap.module.AndroidUtils.suitablePath;
 /**
  * A simple {@link Fragment} subclass.
  */
-public class FragmentEditImage extends Fragment {
+public class FragmentEditImage extends BaseFragment {
 
     private final static String PATH = "PATH";
     private final static String ISCHAT = "ISCHAT";
@@ -94,6 +96,13 @@ public class FragmentEditImage extends Fragment {
             isNicknamePage = bundle.getBoolean(ISNICKNAMEPAGE);
         }
 
+        if (path == null) {
+            if (G.fragmentManager != null) {
+                G.fragmentManager.beginTransaction().remove(FragmentEditImage.this).commit();
+            }
+            return;
+        }
+
         imgEditImage = (ImageView) view.findViewById(R.id.imgEditImage);
 
         TextView txtEditImage = (TextView) view.findViewById(R.id.txtEditImage);
@@ -109,7 +118,6 @@ public class FragmentEditImage extends Fragment {
                 }
             }
         });
-        Log.i("FFFFFFF", "00 nActivityResult: " + path);
         G.imageLoader.displayImage(suitablePath(path), imgEditImage);
 
         updateImage = new UpdateImage() {
@@ -117,9 +125,6 @@ public class FragmentEditImage extends Fragment {
             public void result(String pathImageFilter) {
 
                 path = pathImageFilter;
-
-                Log.i("FFFFFFF", "o2 nActivityResult: " + path);
-
                 G.imageLoader.displayImage(suitablePath(path), imgEditImage);
             }
         };
@@ -137,22 +142,42 @@ public class FragmentEditImage extends Fragment {
             @Override
             public void onClick(View v) {
                 AndroidUtils.closeKeyboard(v);
-
                 String newPath = "file://" + path;
                 String fileNameWithOutExt = path.substring(path.lastIndexOf("/"));
                 String extension = path.substring(path.lastIndexOf("."));
                 SAMPLE_CROPPED_IMAGE_NAME = fileNameWithOutExt.substring(0, fileNameWithOutExt.lastIndexOf(".")) + num + extension;
                 num++;
                 Uri uri = Uri.parse(newPath);
-                UCrop.Options options = new UCrop.Options();
-                options.setStatusBarColor(ContextCompat.getColor(G.context, R.color.black));
-                options.setToolbarColor(ContextCompat.getColor(G.context, R.color.black));
-                options.setCompressionQuality(80);
+                if (Build.VERSION.SDK_INT > Build.VERSION_CODES.JELLY_BEAN_MR1) {
+                    UCrop.Options options = new UCrop.Options();
+                    options.setStatusBarColor(ContextCompat.getColor(G.context, R.color.black));
+                    options.setToolbarColor(ContextCompat.getColor(G.context, R.color.black));
+                    options.setCompressionQuality(80);
+                    options.setFreeStyleCropEnabled(true);
 
-                UCrop.of(uri, Uri.fromFile(new File(G.DIR_IMAGES, SAMPLE_CROPPED_IMAGE_NAME)))
-                        .withAspectRatio(16, 9)
-                        .withOptions(options)
-                        .start(G.context, FragmentEditImage.this);
+                    UCrop.of(uri, Uri.fromFile(new File(G.DIR_IMAGES, SAMPLE_CROPPED_IMAGE_NAME)))
+                            .withOptions(options)
+                            .useSourceImageAspectRatio()
+                            .start(G.context, FragmentEditImage.this);
+                } else {
+                    CropImage.activity(uri)
+                            .setGuidelines(CropImageView.Guidelines.ON)
+                            .setMinCropResultSize(120, 120)
+                            .setAutoZoomEnabled(false)
+                            .setInitialCropWindowPaddingRatio(.08f) // padding window from all
+                            .setBorderCornerLength(50)
+                            .setBorderCornerOffset(0)
+                            .setAllowCounterRotation(true)
+                            .setBorderCornerThickness(8.0f)
+                            .setShowCropOverlay(true)
+                            .setAspectRatio(1, 1)
+                            .setFixAspectRatio(false)
+                            .setBorderCornerColor(getResources().getColor(R.color.whit_background))
+                            .setBackgroundColor(getResources().getColor(R.color.ou_background_crop))
+                            .setScaleType(CropImageView.ScaleType.FIT_CENTER)
+                            .start(G.fragmentActivity, FragmentEditImage.this);
+                }
+
             }
         });
 
@@ -233,9 +258,16 @@ public class FragmentEditImage extends Fragment {
             final Uri resultUri = UCrop.getOutput(data);
             path = AttachFile.getFilePathFromUri(resultUri);
 //            G.imageLoader.displayImage(path, imgEditImage);
-
-            Log.i("FFFFFFF", "o1 nActivityResult: " + path);
             imgEditImage.setImageURI(Uri.parse(path));
+        } else if (requestCode == CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE) { // result for crop
+            CropImage.ActivityResult result = CropImage.getActivityResult(data);
+            if (resultCode == RESULT_OK) {
+
+                path = result.getUri().getPath();
+                imgEditImage.setImageURI(Uri.parse(path));
+            } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+//                Exception error = result.getError();
+            }
         }
 
     }

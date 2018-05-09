@@ -28,6 +28,7 @@ public class SHP_SETTING {
     public static final String KEY_DATA = "data";
     public static final String KEY_IN_APP_BROWSER = "app_browser";
     public static final String KEY_SEND_BT_ENTER = "send_by_enter";
+    public static final String KEY_THEME_DARK = "KEY_THEME_DARK";
     public static final String KEY_ENABLE_ANIMATION = "enable_animation";
     public static final String KEY_ENABLE_DATA_SHAMS = "enable_dataShams";
     public static final String KEY_AUTO_ROTATE = "KEY_AUTO_ROTATE";
@@ -109,6 +110,7 @@ public class SHP_SETTING {
     public static final String KEY_TOGGLE_BOTTON_COLOR = "KEY_TOGGLE_BOTTON_COLOR";
     public static final String KEY_SEND_AND_ATTACH_ICON_COLOR = "KEY_SEND_AND_ATTACH_ICON_COLOR";
     public static final String KEY_FONT_HEADER_COLOR = "KEY_FONT_HEADER_COLOR";
+    public static final String KEY_MENU_BACKGROUND_COLOR = "KEY_MENU_BACKGROUND_COLOR";
     public static final String KEY_PROGRES_COLOR = "KEY_PROGRES_COLOR";
 
     // ========================================================================================== chat background
@@ -141,6 +143,7 @@ public class SHP_SETTING {
     public static final String KEY_TIME_LOCK = "KEY_TIME_LOCK";
     public static final String KEY_SCREEN_SHOT_LOCK = "KEY_SCREEN_SHOT_LOCK";
     public static final String KEY_MAP_ATTENTION_DIALOG = "MAP_ATTENTION_DIALOG";
+    public static final String KEY_MAP_CLEAR_CACHE_GOOGLE = "MAP_CLEAR_CACHE_GOOGLE";
 
     public static class Defaults {
         public static final int KEY_AUTOPLAY_GIFS = 1;

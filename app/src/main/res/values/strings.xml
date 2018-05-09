@@ -1094,6 +1094,7 @@
   <string name="exceed_4_line">Your status cannot exceed 4 lines.</string>
 
   <string name="st_Auto_Rotate">Auto-Rotate Screen</string>
+  <string name="Theme_Dark">Dark Theme</string>
   <string name="two_step_pass_code">PassCode Lock</string>
   <string name="unlock_with_fingerPrint">Unlock With FingerPrint</string>
   <string name="change_pass_code">Change PassCode</string>
@@ -1168,6 +1169,7 @@
   <string name="zihaje">Thul Hijjah</string>
 
   <string name="st_multi_tab">Multi Tab</string>
+  <string name="st_dark_theme">Dark Theme</string>
   <string name="dont_ask_again">Understood</string>
   <string name="attention">Attention</string>
   <string name="content_attention_dialog">Note: People on the map will be displayed with a 500-meter error. So no worries</string>
@@ -1182,6 +1184,15 @@
   <string name="are_you_sure">Are you sure</string>
   <string name="change_storage_place">Change storage place</string>
   <string name="other_files">Other Files</string>
+  <string name="title_import_contact_limit">Import contact list</string>
+  <string name="content_import_contact_limit">Your contact list is very large and can not import to server</string>
 
+  <string name="filter_cancel_content">Are you discarding changes?</string>
+  <string name="lbl_brightness">Brightness</string>
+  <string name="lbl_contrast">Contrast</string>
+  <string name="lbl_saturation">Saturation</string>
+  <string name="tab_filters">Filters</string>
+  <string name="tab_edit">Edit</string>
+  <string name="can_not_open_file">This file can not be opened</string>
 
 </resources>

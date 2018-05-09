@@ -43,6 +43,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.afollestad.materialdialogs.DialogAction;
 import com.afollestad.materialdialogs.MaterialDialog;
@@ -1216,7 +1217,7 @@ public class FragmentShearedMedia extends BaseFragment {
                 }
             });
 
-            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getCacheId(), at.getName(), at.getSize(), ProtoFileDownload.FileDownload.Selector.FILE, dirPath, 2, new HelperDownloadFile.UpdateListener() {
+            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getUrl(), at.getCacheId(), at.getName(), at.getSize(), ProtoFileDownload.FileDownload.Selector.FILE, dirPath, 2, new HelperDownloadFile.UpdateListener() {
                 @Override
                 public void OnProgress(String path, final int progress) {
 
@@ -1456,7 +1457,7 @@ public class FragmentShearedMedia extends BaseFragment {
                     if (at.getSmallThumbnail() != null) {
                         if (at.getSmallThumbnail().getSize() > 0) {
 
-                            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
+                            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getUrl(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
                                 @Override
                                 public void OnProgress(final String path, int progress) {
 
@@ -1592,7 +1593,7 @@ public class FragmentShearedMedia extends BaseFragment {
                     if (at.getSmallThumbnail() != null) {
                         if (at.getSmallThumbnail().getSize() > 0) {
 
-                            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
+                            HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getUrl(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
                                 @Override
                                 public void OnProgress(final String path, int progress) {
 
@@ -1908,7 +1909,7 @@ public class FragmentShearedMedia extends BaseFragment {
                         if (at.getSmallThumbnail() != null) {
                             if (at.getSmallThumbnail().getSize() > 0) {
 
-                                HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
+                                HelperDownloadFile.startDownload(mList.get(position).messageId + "", at.getToken(), at.getUrl(), at.getCacheId(), at.getName(), at.getSmallThumbnail().getSize(), ProtoFileDownload.FileDownload.Selector.SMALL_THUMBNAIL, "", 4, new HelperDownloadFile.UpdateListener() {
                                     @Override
                                     public void OnProgress(final String path, int progress) {
 
@@ -2066,7 +2067,11 @@ public class FragmentShearedMedia extends BaseFragment {
             FileAdapter.ViewHolder vh = (FileAdapter.ViewHolder) holder;
 
             Intent intent = HelperMimeType.appropriateProgram(vh.filePath);
-            if (intent != null) context.startActivity(intent);
+            if (intent != null) {
+                context.startActivity(intent);
+            } else {
+                Toast.makeText(context, R.string.can_not_open_file, Toast.LENGTH_SHORT).show();
+            }
         }
 
         public class ViewHolder extends mHolder {

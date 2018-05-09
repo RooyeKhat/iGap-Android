@@ -349,7 +349,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
 
         TextView txtTime = (TextView) holder.itemView.findViewById(R.id.cslr_txt_time);
         if (txtTime != null) {
-            txtTime.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
+            txtTime.setTextColor(Color.parseColor(G.textTitleTheme));
             txtTime.setText(HelperCalander.getClocktime(mMessage.time, false));
 
             if (HelperCalander.isPersianUnicode) {
@@ -657,18 +657,26 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
         TextView messageText = (TextView) holder.itemView.findViewById(R.id.messageSenderTextMessage);
 
         if (messageText != null) {
-            messageText.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
+            messageText.setTextColor(Color.parseColor(G.textTitleTheme));
         }
         //   ProtoGlobal.RoomMessageType messageType = mMessage.forwardedFrom == null ? mMessage.messageType : mMessage.forwardedFrom.getMessageType();
 
-        setTextColor(imgTick, R.color.colorOldBlack);
+        if (G.isDarkTheme) {
+            setTextColor(imgTick, R.color.white);
+        } else {
+            setTextColor(imgTick, R.color.colorOldBlack);
+        }
+
 
         ((FrameLayout.LayoutParams) frameLayout.getLayoutParams()).gravity = Gravity.LEFT;
 
         ((LinearLayout.LayoutParams) holder.itemView.findViewById(R.id.contentContainer).getLayoutParams()).gravity = Gravity.LEFT;
 
-        ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangel_white_round);
-
+        if (G.isDarkTheme) {
+            ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangel_white_round_dark);
+        } else {
+            ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangel_white_round);
+        }
 
         /**
          * add main layout margin to prevent getting match parent completely
@@ -707,7 +715,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
         //  TextView iconHearing = (TextView) holder.itemView.findViewById(R.id.cslr_txt_hearing);
 
         if (messageText != null) {
-            messageText.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
+            messageText.setTextColor(Color.parseColor(G.textTitleTheme));
         }
         //   ProtoGlobal.RoomMessageType messageType = mMessage.forwardedFrom == null ? mMessage.messageType : mMessage.forwardedFrom.getMessageType();
 
@@ -718,9 +726,18 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
             setTextColor(imgTick, R.color.iGapColor);
             imgTick.setVisibility(View.VISIBLE);
         } else {
-            setTextColor(imgTick, R.color.colorOldBlack);
+
+            if (G.isDarkTheme) {
+                setTextColor(imgTick, R.color.white);
+            } else {
+                setTextColor(imgTick, R.color.colorOldBlack);
+            }
         }
-        ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangle_send_round_color);
+        if (G.isDarkTheme) {
+            ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangle_send_round_color_dark);
+        } else {
+            ((View) (holder.itemView.findViewById(R.id.contentContainer)).getParent()).setBackgroundResource(R.drawable.rectangle_send_round_color);
+        }
 
         /**
          * add main layout margin to prevent getting match parent completely
@@ -789,15 +806,33 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
                 ((EmojiTextViewE) replayView.findViewById(R.id.chslr_txt_replay_message)).setText(forwardMessage);
 
                 if (mMessage.isSenderMe() && type != ProtoGlobal.Room.Type.CHANNEL) {
-                    replayView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.messageBox_replyBoxBackgroundSend));
+                    if (G.isDarkTheme) {
+                        replayView.setBackgroundColor(Color.parseColor(G.backgroundTheme));
+                        replyFrom.setTextColor(Color.parseColor(G.textTitleTheme));
+                        replayMessage.setTextColor(Color.parseColor(G.textTitleTheme));
+                    } else {
+                        replayView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.messageBox_replyBoxBackgroundSend));
+                        replyFrom.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
+                        replayMessage.setTextColor(holder.itemView.getResources().getColor(R.color.replay_message_text));
+                    }
+
                     //holder.itemView.findViewById(R.id.verticalLine).setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.messageBox_sendColor));
-                    replyFrom.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
-                    replayMessage.setTextColor(holder.itemView.getResources().getColor(R.color.replay_message_text));
+
                 } else {
-                    replayView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.messageBox_replyBoxBackgroundReceive));
-                    // holder.itemView.findViewById(R.id.verticalLine).setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.messageBox_receiveColor));
-                    replyFrom.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
-                    replayMessage.setTextColor(holder.itemView.getResources().getColor(R.color.replay_message_text));
+
+                    if (G.isDarkTheme) {
+                        replayView.setBackgroundColor(Color.parseColor(G.backgroundTheme));
+                        // holder.itemView.findViewById(R.id.verticalLine).setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.messageBox_receiveColor));
+                        replyFrom.setTextColor(Color.parseColor(G.textTitleTheme));
+                        replayMessage.setTextColor(Color.parseColor(G.textTitleTheme));
+                    } else {
+                        replayView.setBackgroundColor(holder.itemView.getResources().getColor(R.color.messageBox_replyBoxBackgroundReceive));
+                        // holder.itemView.findViewById(R.id.verticalLine).setBackgroundColor(holder.itemView.getContext().getResources().getColor(R.color.messageBox_receiveColor));
+                        replyFrom.setTextColor(holder.itemView.getResources().getColor(R.color.colorOldBlack));
+                        replayMessage.setTextColor(holder.itemView.getResources().getColor(R.color.replay_message_text));
+                    }
+
+
                 }
 
                 replyFrom.measure(0, 0);       //must call measure!
@@ -889,7 +924,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
                 if (realmRoom != null) {
                     txtForwardFrom.setText(realmRoom.getTitle());
                     if (mMessage.isSenderMe()) {
-                        txtForwardFrom.setTextColor(G.context.getResources().getColor(R.color.colorOldBlack));
+                        txtForwardFrom.setTextColor(Color.parseColor(G.textTitleTheme));
                     } else {
                         txtForwardFrom.setTextColor(G.context.getResources().getColor(R.color.iGapColor));
                     }
@@ -928,7 +963,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
 
                         txtForwardFrom.setText(realmRoom1.getTitle());
                         if (mMessage.isSenderMe()) {
-                            txtForwardFrom.setTextColor(G.context.getResources().getColor(R.color.colorOldBlack));
+                            txtForwardFrom.setTextColor(Color.parseColor(G.textTitleTheme));
                         } else {
                             txtForwardFrom.setTextColor(G.context.getResources().getColor(R.color.iGapColor));
                         }
@@ -1360,6 +1395,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
         if (attachment == null) return;
 
         String token = attachment.getToken();
+        String url = attachment.getUrl();
         String name = attachment.getName();
 
         long size = 0;
@@ -1376,13 +1412,12 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
 
         if (token != null && token.length() > 0 && size > 0) {
 
-            HelperDownloadFile.startDownload(mMessage.messageID, token, attachment.getCacheId(), name, size, selector, "", 4, new HelperDownloadFile.UpdateListener() {
+            HelperDownloadFile.startDownload(mMessage.messageID, token, url, attachment.getCacheId(), name, size, selector, "", 4, new HelperDownloadFile.UpdateListener() {
                 @Override
                 public void OnProgress(final String path, int progress) {
 
                     if (FragmentChat.canUpdateAfterDownload) {
                         if (progress == 100) {
-
                             G.handler.post(new Runnable() {
                                 @Override
                                 public void run() {
@@ -1421,6 +1456,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
 
 
         final String token = attachment.getToken();
+        final String url = attachment.getUrl();
         String name = attachment.getName();
         Long size = attachment.getSize();
         ProtoFileDownload.FileDownload.Selector selector = ProtoFileDownload.FileDownload.Selector.FILE;
@@ -1435,7 +1471,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
             progressBar.withDrawable(R.drawable.ic_cancel, false);
 
 
-            HelperDownloadFile.startDownload(mMessage.messageID, token, attachment.getCacheId(), name, size, selector, _path, priority, new HelperDownloadFile.UpdateListener() {
+            HelperDownloadFile.startDownload(mMessage.messageID, token, url, attachment.getCacheId(), name, size, selector, _path, priority, new HelperDownloadFile.UpdateListener() {
                 @Override
                 public void OnProgress(final String path, final int progress) {
 
@@ -1445,6 +1481,7 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
                             public void run() {
                                 if (progressBar.getTag() != null && progressBar.getTag().equals(mMessage.messageID)) {
                                     progressBar.withProgress(progress);
+
                                     if (progress == 100) {
 
                                         if (messageType == ProtoGlobal.RoomMessageType.AUDIO || messageType == ProtoGlobal.RoomMessageType.AUDIO_TEXT || messageType == ProtoGlobal.RoomMessageType.VOICE) {
@@ -1469,7 +1506,6 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
                             @Override
                             public void run() {
                                 if (progressBar.getTag() != null && progressBar.getTag().equals(mMessage.messageID)) {
-
                                     progressBar.withProgress(0);
                                     progressBar.withDrawable(R.drawable.ic_download, true);
 
@@ -1528,7 +1564,9 @@ public abstract class AbstractMessage<Item extends AbstractMessage<?, ?>, VH ext
                                 //    }
                                 //}
                                 if (progressBar.getTag() != null && progressBar.getTag().equals(mMessage.messageID) && !(mMessage.status.equals(ProtoGlobal.RoomMessageStatus.FAILED.toString()))) {
-                                    progressBar.withProgress(progress);
+                                    if (progress >= 1) {
+                                        progressBar.withProgress(progress);
+                                    }
                                     if (progress == 100) {
                                         progressBar.performProgress();
                                     }
