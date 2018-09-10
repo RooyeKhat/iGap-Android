@@ -33,6 +33,7 @@
     </attr>
     <attr name="menu_animation_time" format="integer" />
     <attr name="menu_elevation" format="dimension" />
+    <attr name="menu_config" format="boolean" />
   </declare-styleable>
 
 
@@ -97,6 +98,7 @@
 
   <!--Menu-->
   <attr name="textColorMenuTheme" format="reference" />
+  <attr name="textColorBottomSheet" format="reference" />
   <attr name="iconColorMenuTheme" format="reference" />
   <attr name="backgroundColorMenuTheme" format="reference" />
 

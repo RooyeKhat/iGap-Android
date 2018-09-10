@@ -1,12 +1,12 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.realm;
 
@@ -50,7 +50,7 @@ public class RealmMigration implements io.realm.RealmMigration {
         }
 
         if (oldVersion == 3) {
-            schema.create(RealmWallpaper.class.getSimpleName()).addField(RealmWallpaperFields.LAST_TIME_GET_LIST, long.class, FieldAttribute.REQUIRED).addField(RealmWallpaperFields.WALL_PAPER_LIST, byte[].class).addField(RealmWallpaperFields.LOCAL_LIST, byte[].class);
+            schema.create(RealmWallpaper.class.getSimpleName()).addField(RealmWallpaperFields.LAST_TIME_GET_LIST, long.class, FieldAttribute.REQUIRED).addField("wallPaperList", byte[].class).addField(RealmWallpaperFields.LOCAL_LIST, byte[].class);
             oldVersion++;
         }
 
@@ -98,7 +98,7 @@ public class RealmMigration implements io.realm.RealmMigration {
         }
 
         if (oldVersion == 9) {
-            schema.create(RealmCallConfig.class.getSimpleName()).addField(RealmCallConfigFields.VOICE_CALLING, boolean.class, FieldAttribute.REQUIRED).addField(RealmCallConfigFields.VIDEO_CALLING, boolean.class, FieldAttribute.REQUIRED).addField(RealmCallConfigFields.SCREEN_SHARING, boolean.class, FieldAttribute.REQUIRED).addField(RealmCallConfigFields.ICE_SERVER, byte[].class);
+            schema.create(RealmCallConfig.class.getSimpleName()).addField(RealmCallConfigFields.VOICE_CALLING, boolean.class, FieldAttribute.REQUIRED).addField(RealmCallConfigFields.VIDEO_CALLING, boolean.class, FieldAttribute.REQUIRED).addField(RealmCallConfigFields.SCREEN_SHARING, boolean.class, FieldAttribute.REQUIRED).addField("IceServer", byte[].class);
 
             RealmObjectSchema realmCallLog = schema.create(RealmCallLog.class.getSimpleName()).addField(RealmCallLogFields.ID, long.class, FieldAttribute.REQUIRED).addField(RealmCallLogFields.NAME, String.class).addField(RealmCallLogFields.TIME, long.class, FieldAttribute.REQUIRED).addField(RealmCallLogFields.LOG_PROTO, byte[].class);
             realmCallLog.addPrimaryKey(RealmCallLogFields.ID);
@@ -210,7 +210,7 @@ public class RealmMigration implements io.realm.RealmMigration {
             oldVersion++;
         }
 
-        if (oldVersion == REALM_LATEST_MIGRATION_VERSION) { // REALM_LATEST_MIGRATION_VERSION = 17
+        if (oldVersion == 17) {
             RealmObjectSchema realmRoom = schema.get(RealmRoom.class.getSimpleName());
             if (realmRoom != null) {
                 realmRoom.addField(RealmRoomFields.PIN_MESSAGE_ID, long.class, FieldAttribute.REQUIRED);
@@ -244,6 +244,86 @@ public class RealmMigration implements io.realm.RealmMigration {
 
             if (schema.contains("RealmRoomMessageLog")) {
                 schema.remove("RealmRoomMessageLog");
+            }
+
+            oldVersion++;
+        }
+
+        if (oldVersion == 18) {
+            RealmObjectSchema realmUserInfo = schema.get(RealmUserInfo.class.getSimpleName());
+            if (realmUserInfo != null) {
+                realmUserInfo.addField(RealmUserInfoFields.PUSH_NOTIFICATION_TOKEN, String.class);
+            }
+
+            oldVersion++;
+        }
+
+        if (oldVersion == 19) {
+
+            RealmObjectSchema realmRoomMessageWallet = schema.create(RealmRoomMessageWallet.class.getSimpleName())
+                    .addField(RealmRoomMessageWalletFields.ID, long.class, FieldAttribute.REQUIRED)
+                    .addPrimaryKey(RealmRoomMessageWalletFields.ID)
+                    .addField(RealmRoomMessageWalletFields.FROM_USER_ID, long.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.TO_USER_ID, long.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.AMOUNT, long.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.TRACE_NUMBER, long.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.INVOICE_NUMBER, long.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.PAY_TIME, int.class, FieldAttribute.REQUIRED)
+                    .addField(RealmRoomMessageWalletFields.TYPE, String.class)
+                    .addField(RealmRoomMessageWalletFields.DESCRIPTION, String.class);
+
+            RealmObjectSchema realmRoomMessage = schema.get(RealmRoomMessage.class.getSimpleName());
+            if (realmRoomMessage != null) {
+                realmRoomMessage.addRealmObjectField("roomMessageWallet", realmRoomMessageWallet);
+            }
+
+            oldVersion++;
+        }
+
+        if (oldVersion == 20) {
+
+            RealmObjectSchema realmIceServer = schema.create(RealmIceServer.class.getSimpleName()).addField("url", String.class).addField("username", String.class).addField("credential", String.class);
+
+            RealmObjectSchema realmWallpaperProto = schema.create(RealmWallpaperProto.class.getSimpleName()).addRealmObjectField("file", schema.get(RealmAttachment.class.getSimpleName())).addField("color", String.class);
+
+            RealmObjectSchema realmCallConfig = schema.get(RealmCallConfig.class.getSimpleName());
+            if (realmCallConfig != null) {
+                realmCallConfig.addRealmListField("realmIceServer", realmIceServer);
+
+                if (realmCallConfig.hasField("IceServer")) {
+                    realmCallConfig.removeField("IceServer");
+                }
+            }
+
+            RealmObjectSchema realmWallpaper = schema.get(RealmWallpaper.class.getSimpleName());
+            if (realmWallpaper != null) {
+                realmWallpaper.addRealmListField("realmWallpaperProto", realmWallpaperProto);
+
+                if (realmWallpaper.hasField("wallPaperList")) {
+                    realmWallpaper.removeField("wallPaperList");
+                }
+            }
+
+            oldVersion++;
+        }
+
+        if (oldVersion == 21) {
+
+            schema.create(RealmDataUsage.class.getSimpleName()).addField("type", String.class)
+                    .addField("downloadSize", long.class, FieldAttribute.REQUIRED)
+                    .addField("uploadSize", long.class, FieldAttribute.REQUIRED)
+                    .addField("connectivityType", boolean.class, FieldAttribute.REQUIRED)
+                    .addField("numUploadedFiles", int.class, FieldAttribute.REQUIRED)
+                    .addField("numDownloadedFile", int.class, FieldAttribute.REQUIRED);
+
+            oldVersion++;
+        }
+
+        if (oldVersion == REALM_LATEST_MIGRATION_VERSION) { // REALM_LATEST_MIGRATION_VERSION = 22
+
+            RealmObjectSchema realmUserInfo = schema.get(RealmUserInfo.class.getSimpleName());
+            if (realmUserInfo != null) {
+                realmUserInfo.addField("isPattern", boolean.class, FieldAttribute.REQUIRED);
             }
 
             oldVersion++;

@@ -7,7 +7,7 @@ package net.iGap.viewmodel;
  * iGap Messenger | Free, Fast and Secure instant messaging application
  * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
  * All rights reserved.
-*/
+ */
 
 import android.app.Activity;
 import android.app.Dialog;
@@ -91,6 +91,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import io.realm.Realm;
 
@@ -153,10 +154,6 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
     public ObservableInt txtVerifyServerColor = new ObservableInt(G.context.getResources().getColor(R.color.rg_text_verify));
     public ObservableInt btnStartColor = new ObservableInt(G.context.getResources().getColor(R.color.rg_whit_background));
     public ObservableInt btnStartBackgroundColor = new ObservableInt(Color.parseColor(G.appBarColor));
-    public ObservableInt txtVerifyConnectAppearance = new ObservableInt();
-    public ObservableInt txtVerifyServerAppearance = new ObservableInt();
-    public ObservableInt txtVerifyKeyAppearance = new ObservableInt();
-    public ObservableInt txtVerifySmsAppearance = new ObservableInt();
     public ObservableBoolean edtCodeNumberEnable = new ObservableBoolean(false);
     public ObservableBoolean btnChoseCountryEnable = new ObservableBoolean(true);
     public ObservableBoolean edtPhoneNumberEnable = new ObservableBoolean(true);
@@ -866,10 +863,8 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
                         prgVerifyConnectVisibility.set(View.GONE);
                         txtIconVerifyConnectVisibility.set(View.VISIBLE);
                         imgVerifySmsVisibility.set(View.GONE);
-                        //txtVerifyConnectAppearance.set(R.style.RedHUGEText);
                         txtVerifyConnectColor.set(G.context.getResources().getColor(R.color.rg_text_verify));
                         prgVerifySmsVisibility.set(View.VISIBLE);
-                        //txtVerifySmsAppearance.set(R.style.RedHUGEText);
 
                     }
                 });
@@ -928,6 +923,13 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
                             requestRegister();
                             sendRequestRegister++;
                         }
+                    } else if (majorCode == 10) {
+                        G.handler.post(new Runnable() {
+                            @Override
+                            public void run() {
+                                dialogWaitTime(R.string.IP_blocked, time, majorCode);
+                            }
+                        });
                     }
                 } catch (RuntimeException e) {
                     e.printStackTrace();
@@ -972,10 +974,11 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
         CountDownTimer countWaitTimer = new CountDownTimer(time * 1000, 1000) {
             @Override
             public void onTick(long millisUntilFinished) {
-                int seconds = (int) ((millisUntilFinished) / 1000);
-                int minutes = seconds / 60;
-                seconds = seconds % 60;
-                remindTime.setText("" + String.format("%02d", minutes) + ":" + String.format("%02d", seconds));
+                long seconds =  millisUntilFinished/1000 % 60;
+                long minutes = millisUntilFinished/(60*1000) % 60;
+                long hour = millisUntilFinished/(3600*1000);
+
+                remindTime.setText(String.format("%02d:%02d:%02d",hour, minutes, seconds));
                 dialogWait.getActionButton(DialogAction.POSITIVE).setEnabled(false);
             }
 
@@ -1020,7 +1023,6 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
         if (G.socketConnection) {
 
             prgVerifyKeyVisibility.set(View.VISIBLE);
-            //txtVerifyKeyAppearance.set(R.style.RedHUGEText);
 
 
             userVerifyResponse(verificationCode);
@@ -1042,7 +1044,6 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
             // return step one
             prgVerifyConnectVisibility.set(View.VISIBLE);
             txtIconVerifyConnectVisibility.set(View.GONE);
-            txtVerifyConnectAppearance.set(Typeface.NORMAL);
             // clear step two
             prgVerifySmsVisibility.set(View.GONE);
             imgVerifySmsVisibility.set(View.INVISIBLE);
@@ -1199,7 +1200,6 @@ public class FragmentRegisterViewModel implements OnSecurityCheckPassword, OnRec
 
     private void userLogin(final String token) {
         prgVerifyServerVisibility.set(View.VISIBLE);
-        //txtVerifyServerAppearance.set(R.style.RedHUGEText);
 
         G.onUserLogin = new OnUserLogin() {
             @Override

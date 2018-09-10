@@ -257,7 +257,7 @@
                 android:gravity="center"
                 android:text="@string/md_close_button"
                 android:textAppearance="@style/TextIconAppearance.all"
-                style="?textSubColorSettingTheme"
+                style="?textTitleColorSettingTheme"
                 android:textSize="@dimen/dp20" />
             </net.iGap.libs.rippleeffect.RippleView>
 
@@ -302,7 +302,7 @@
                   android:gravity="center"
                   android:text="@string/md_back_arrow_reply"
                   android:textAppearance="@style/TextIconAppearance.all"
-                  style="?textSubColorSettingTheme"
+                  style="?textTitleColorSettingTheme"
                   android:textSize="@dimen/dp20" />
               </net.iGap.libs.rippleeffect.RippleView>
 
@@ -325,7 +325,7 @@
                   android:gravity="center"
                   android:text="@string/md_copy"
                   android:textAppearance="@style/TextIconAppearance.all"
-                  style="?textSubColorSettingTheme"
+                  style="?textTitleColorSettingTheme"
                   android:textSize="@dimen/dp20" />
               </net.iGap.libs.rippleeffect.RippleView>
 
@@ -348,7 +348,7 @@
                   android:gravity="center"
                   android:text="@string/md_forward"
                   android:textAppearance="@style/TextIconAppearance.all"
-                  style="?textSubColorSettingTheme"
+                  style="?textTitleColorSettingTheme"
                   android:textSize="@dimen/dp20" />
               </net.iGap.libs.rippleeffect.RippleView>
 
@@ -374,7 +374,7 @@
                   android:gravity="center"
                   android:text="@string/md_rubbish_delete_file"
                   android:textAppearance="@style/TextIconAppearance.all"
-                  style="?textSubColorSettingTheme"
+                  style="?textTitleColorSettingTheme"
                   android:textSize="@dimen/dp20" />
               </net.iGap.libs.rippleeffect.RippleView>
             </LinearLayout>
@@ -680,7 +680,7 @@
         android:gravity="center"
         android:text="@string/md_expand_arrow"
         android:textAppearance="@style/TextIconAppearance_toolbar"
-        android:textColor="@color/green"
+        style="?backgroundColorSettingTheme"
         android:textSize="@dimen/dp20" />
 
       <TextView
@@ -692,7 +692,7 @@
         android:padding="@dimen/dp8"
         android:singleLine="true"
         android:text="0 of 0"
-        android:textColor="@color/green"
+        style="?backgroundColorSettingTheme"
         android:textSize="@dimen/dp16" />
 
 
@@ -704,7 +704,7 @@
         android:gravity="center"
         android:text="@string/md_downwards_arrow"
         android:textAppearance="@style/TextIconAppearance_toolbar"
-        android:textColor="@color/green"
+        style="?backgroundColorSettingTheme"
         android:textSize="@dimen/dp20" />
 
       <LinearLayout
@@ -749,7 +749,7 @@
       android:id="@+id/ac_ll_join"
       android:layout_width="match_parent"
       android:layout_height="@dimen/dp48"
-      android:background="@color/green"
+      style="?backgroundColorSettingTheme"
       android:clickable="true"
       android:gravity="center"
       android:orientation="horizontal"
@@ -790,7 +790,7 @@
           android:layout_weight="1"
           android:gravity="center"
           android:text="Mute"
-          android:textColor="@color/green"
+          style="colorAccent"
           android:textSize="@dimen/dp16"
 
           />

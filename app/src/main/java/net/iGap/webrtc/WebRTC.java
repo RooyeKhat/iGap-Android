@@ -15,15 +15,16 @@ import android.os.Build;
 import android.util.Log;
 
 import net.iGap.G;
-import net.iGap.proto.ProtoSignalingGetConfiguration;
 import net.iGap.proto.ProtoSignalingOffer;
 import net.iGap.realm.RealmCallConfig;
+import net.iGap.realm.RealmIceServer;
 import net.iGap.request.RequestSignalingAccept;
 import net.iGap.request.RequestSignalingLeave;
 import net.iGap.request.RequestSignalingOffer;
 
 import org.webrtc.AudioSource;
 import org.webrtc.AudioTrack;
+
 import org.webrtc.MediaConstraints;
 import org.webrtc.MediaStream;
 import org.webrtc.PeerConnection;
@@ -50,6 +51,7 @@ public class WebRTC {
     private MediaConstraints audioConstraints;
     private AudioTrack audioTrack;
     private AudioSource audioSource;
+
 
     public WebRTC() {
         peerConnectionInstance();
@@ -90,6 +92,8 @@ public class WebRTC {
     private PeerConnectionFactory peerConnectionFactoryInstance() {
         if (peerConnectionFactory == null) {
 
+
+
             Set<String> HARDWARE_AEC_WHITELIST = new HashSet<String>() {{
                 add("D5803");
                 add("FP1");
@@ -114,12 +118,15 @@ public class WebRTC {
                 }
             }
 
-            PeerConnectionFactory.initializeAndroidGlobals(G.context,  // Context
-                    true,  // Audio Enabled
-                    false,  // Video Enabled
-                    true); // Hardware Acceleration Enabled
+            //Initialize PeerConnectionFactory globals.
+            //Params are context, initAudio,initVideo and videoCodecHwAcceleration
+            //PeerConnectionFactory.initializeAndroidGlobals(this, true, true, true);
+            PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(G.context).createInitializationOptions());
 
-            peerConnectionFactory = new PeerConnectionFactory();
+
+            //Create a new PeerConnectionFactory instance.
+            //PeerConnectionFactory.Options options = new PeerConnectionFactory.Options();
+             peerConnectionFactory = PeerConnectionFactory.builder().createPeerConnectionFactory();
         }
         return peerConnectionFactory;
     }
@@ -129,7 +136,7 @@ public class WebRTC {
             List<PeerConnection.IceServer> iceServers = new ArrayList<>();
             Realm realm = Realm.getDefaultInstance();
             RealmCallConfig realmCallConfig = realm.where(RealmCallConfig.class).findFirst();
-            for (ProtoSignalingGetConfiguration.SignalingGetConfigurationResponse.IceServer ice : realmCallConfig.getIceServer()) {
+            for (RealmIceServer ice : realmCallConfig.getIceServer()) {
                 iceServers.add(new PeerConnection.IceServer(ice.getUrl(), ice.getUsername(), ice.getCredential()));
             }
             realm.close();

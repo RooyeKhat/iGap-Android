@@ -1,15 +1,16 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap;
 
+import android.accounts.Account;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
@@ -18,6 +19,7 @@ import android.graphics.Typeface;
 import android.os.Build;
 import android.os.Environment;
 import android.os.Handler;
+import android.os.SystemClock;
 import android.support.multidex.MultiDexApplication;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentManager;
@@ -43,6 +45,9 @@ import net.iGap.module.enums.ConnectionState;
 import net.iGap.proto.ProtoClientCondition;
 import net.iGap.request.RequestWrapper;
 
+import org.paygear.wallet.model.Card;
+import org.paygear.wallet.utils.Utils;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -55,6 +60,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import cat.ereza.customactivityoncrash.config.CaocConfig;
 import io.fabric.sdk.android.Fabric;
+import ir.radsense.raadcore.Raad;
+import ir.radsense.raadcore.web.WebBase;
 
 import static net.iGap.Config.DEFAULT_BOTH_CHAT_DELETE_TIME;
 
@@ -64,6 +71,7 @@ public class G extends MultiDexApplication {
     public static final String IMAGES = "/iGap Images";
     public static final String VIDEOS = "/iGap Videos";
     public static final String AUDIOS = "/iGap Audios";
+    public static final String MESSAGES = "/iGap Messages";
     //public static Realm mRealm;
     public static final String DOCUMENT = "/iGap Document";
     public static final String TEMP = "/.temp";
@@ -72,6 +80,7 @@ public class G extends MultiDexApplication {
     public static final String DIR_SDCARD = Environment.getExternalStorageDirectory().getAbsolutePath();
     public static Context context;
     public static Handler handler;
+    public static long mLastClickTime = SystemClock.elapsedRealtime();
     public static LayoutInflater inflater;
     public static HelperNotificationAndBadge helperNotificationAndBadge;
     public static ConcurrentHashMap<String, RequestWrapper> requestQueueMap = new ConcurrentHashMap<>();
@@ -87,6 +96,7 @@ public class G extends MultiDexApplication {
     public static ArrayList<String> waitingActionIds = new ArrayList<>();
     public static ArrayList<String> generalImmovableClasses = new ArrayList<>();
     public static ArrayList<Integer> forcePriorityActionId = new ArrayList<>();
+    public static ArrayList<Integer> ignoreErrorCodes = new ArrayList<>();
     public static HashMap<Integer, String> lookupMap = new HashMap<>();
     public static HashMap<String, ArrayList<Object>> requestQueueRelationMap = new HashMap<>();
     public static HashMap<Integer, Integer> priorityActionId = new HashMap<>();
@@ -102,16 +112,23 @@ public class G extends MultiDexApplication {
     public static String DIR_VIDEOS = DIR_APP + VIDEOS;
     public static String DIR_AUDIOS = DIR_APP + AUDIOS;
     public static String DIR_DOCUMENT = DIR_APP + DOCUMENT;
+    public static String DIR_MESSAGES = DIR_APP + MESSAGES;
     public static String DIR_TEMP = DIR_APP + TEMP;
     public static String DIR_CHAT_BACKGROUND = DIR_APP + CHAT_BACKGROUND;
     public static String DIR_IMAGE_USER = DIR_APP + IMAGE_USER;
     public static String CHAT_MESSAGE_TIME = "H:mm";
-    public static String selectedLanguage = "en";
+    public static String selectedLanguage = null;
     public static String symmetricMethod;
     public static String appBarColor; // default color
+    public static String bubbleChatSend; // default color
+    public static String bubbleChatReceive; // default color
+    public static String fabBottom; // default color
+    public static String bubbleChatMusic; // default color
+    public static String textChatMusic;
     public static String notificationColor;
     public static String toggleButtonColor;
     public static String attachmentColor;
+    public static String iconColorBottomSheet;
     public static String progressColor;
     public static String headerTextColor;
     public static String backgroundTheme;
@@ -119,8 +136,13 @@ public class G extends MultiDexApplication {
     public static String logLineTheme;
     public static String voteIconTheme;
     public static String textTitleTheme;
+    public static String textBubble;
+    public static String linkColor;
+    public static String txtIconCheck;
+    public static String textBubbleSend;
     public static String textSubTheme;
     public static String tintImage;
+    public static String lineBorder;
     public static String menuBackgroundColor;
     public static String authorHash;
     public static String displayName;
@@ -154,7 +176,11 @@ public class G extends MultiDexApplication {
     public static boolean isLandscape = false;
     public static boolean isAppRtl = false;
     public static boolean isLinkClicked = false;
+    public static boolean isMplActive = false;
+    public static boolean isWalletActive = false;
+    public static boolean isWalletRegister = false;
     public static boolean isDarkTheme = false;
+    public static int themeColor;
     public static String selectedTabInMainActivity = "";
     public static int ivSize;
     public static int userTextSize = 0;
@@ -180,6 +206,7 @@ public class G extends MultiDexApplication {
     public static OnClientSearchRoomHistory onClientSearchRoomHistory;
     public static OnUserVerification onUserVerification;
     public static OnReceivePageInfoTOS onReceivePageInfoTOS;
+    public static OnReceivePageInfoWalletAgreement onReceivePageInfoWalletAgreement;
     public static OnUserLogin onUserLogin;
     public static OnUserProfileSetEmailResponse onUserProfileSetEmailResponse;
     public static OnUserProfileSetGenderResponse onUserProfileSetGenderResponse;
@@ -190,6 +217,7 @@ public class G extends MultiDexApplication {
     public static OnUserContactDelete onUserContactdelete;
     public static OnClientGetRoomListResponse onClientGetRoomListResponse;
     public static OnClientGetRoomResponse onClientGetRoomResponse;
+    public static OnInquiry onInquiry;
     public static OnSecuring onSecuring;
     public static OnChatGetRoom onChatGetRoom;
     public static OnChatEditMessageResponse onChatEditMessageResponse;
@@ -331,6 +359,8 @@ public class G extends MultiDexApplication {
     public static OnGeoCommentResponse onGeoCommentResponse;
     public static OnGeoGetConfiguration onGeoGetConfiguration;
     public static OnNotifyTime onNotifyTime;
+    public static OnPayment onPayment;
+    public static OnMplResult onMplResult;
     public static ISignalingOffer iSignalingOffer;
     public static ISignalingRinging iSignalingRinging;
     public static ISignalingAccept iSignalingAccept;
@@ -354,6 +384,12 @@ public class G extends MultiDexApplication {
     public static boolean isTimeWhole = false;
     public static FragmentManager fragmentManager;
     private Tracker mTracker;
+    public static Account iGapAccount;
+    public static Card selectedCard = null;
+    public static long cardamount;
+    public static String jwt = null;
+
+    public static int rotationState;
 
 
     @Override
@@ -374,6 +410,10 @@ public class G extends MultiDexApplication {
         handler = new Handler();
         inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
 
+        Raad.init(getApplicationContext());
+        Utils.setInstart(context, "fa");
+        WebBase.apiKey = "5aa7e856ae7fbc00016ac5a01c65909797d94a16a279f46a4abb5faa";
+
         new StartupActions();
     }
 
@@ -384,12 +424,10 @@ public class G extends MultiDexApplication {
     }
 
     public static Context updateResources(Context baseContext) {
-        String selectedLanguage = G.selectedLanguage;
-        if (selectedLanguage == null) {
-            selectedLanguage = "en";
+        if (G.selectedLanguage == null) {
+            G.selectedLanguage = Locale.getDefault().getLanguage();
         }
-
-        Locale locale = new Locale(selectedLanguage);
+        Locale locale = new Locale(G.selectedLanguage);
         Locale.setDefault(locale);
 
         Resources res = baseContext.getResources();
@@ -421,7 +459,7 @@ public class G extends MultiDexApplication {
     synchronized public Tracker getDefaultTracker() {
         if (mTracker == null) {
             GoogleAnalytics analytics = GoogleAnalytics.getInstance(this);
-            mTracker = analytics.newTracker(R.xml.global_tracker);
+            mTracker = analytics.newTracker(R.xml.global_track);
         }
         return mTracker;
     }

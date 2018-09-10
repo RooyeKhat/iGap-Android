@@ -19,8 +19,7 @@
   <FrameLayout
     android:id="@+id/rg_rootActivityRegister"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="@color/rg_agreement_background"
+    android:layout_height="match_parent" android:background="@{Color.parseColor(G.backgroundTheme),default=@color/toolbar_background}"
     android:clickable="true"
     tools:ignore="MissingPrefix">
 
@@ -28,8 +27,7 @@
       xmlns:app="http://schemas.android.com/apk/res-auto"
       xmlns:tools="http://schemas.android.com/tools"
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:background="@color/rg_agreement_background"
+      android:layout_height="match_parent" android:background="@{Color.parseColor(G.backgroundTheme),default=@color/toolbar_background}"
       android:orientation="vertical"
       tools:ignore="MissingPrefix">
 
@@ -135,6 +133,7 @@
               android:textColor="@color/toolbar_title_register">
 
               <TextView
+                fontPath="fonts/IRANSansMobile.ttf"
                 android:id="@+id/rg_txt_title_register"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -142,7 +141,7 @@
                 android:background="@android:color/transparent"
                 android:gravity="center"
                 android:text="@string/rg_title_register"
-                android:textColor="@color/rg_black_register"
+                android:textColor="@{Color.parseColor(G.textTitleTheme),default=@color/toolbar_background}"
                 android:textSize="@dimen/dp18" />
 
               <View
@@ -152,9 +151,11 @@
                 android:layout_marginLeft="@dimen/dp32"
                 android:layout_marginRight="@dimen/dp32"
                 android:layout_marginTop="@dimen/dp8"
-                android:background="@color/rg_line2_background" />
+                android:background="@{Color.parseColor(G.lineBorder),default=@color/toolbar_background}"
+                  />
 
               <TextView
+                fontPath="fonts/IRANSansMobile.ttf"
                 android:id="@+id/rg_txt_text_descRegister"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -165,7 +166,7 @@
                 android:layout_marginTop="@dimen/dp12"
                 android:gravity="center"
                 android:text="@string/rg_confirm_text_register"
-                android:textColor="@color/rg_confirm_country"
+                android:textColor="@{Color.parseColor(G.textTitleTheme),default=@color/toolbar_background}"
                 android:textSize="@dimen/dp14"
 
                 />
@@ -238,7 +239,7 @@
                   android:gravity="left|center_vertical"
                   android:imeOptions="flagNoExtractUi"
                   android:inputType="phone"
-                  android:onTextChanged="@{fragmentRegisterViewModel.onTextChanged}"
+                  android:onTextChanged="@{fragmentRegisterViewModel::onTextChanged}"
                   android:padding="@dimen/dp4"
                   android:text="@={fragmentRegisterViewModel.callBackEdtPhoneNumber}"
                   android:textAlignment="gravity"
@@ -283,6 +284,7 @@
               android:visibility="visible">
 
               <!--1-->
+
 
               <LinearLayout
                 android:id="@+id/rg_layout_verify_and_agreement"
@@ -329,12 +331,12 @@
 
 
                   <TextView
+                    fontPath="fonts/IRANSansMobile.ttf"
                     android:id="@+id/rg_txt_verify_connect"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:text="@{fragmentRegisterViewModel.CallBackTxtVerifyConnect , default = @string/rg_verify_register1}"
-                    android:textAppearance="@{fragmentRegisterViewModel.txtVerifyConnectAppearance}"
                     android:textColor="@{fragmentRegisterViewModel.txtVerifyConnectColor}"
                     android:textSize="@dimen/dp13" />
 
@@ -366,6 +368,7 @@
                     android:visibility="@{fragmentRegisterViewModel.imgVerifySmsVisibility}" />
 
                   <TextView
+                    fontPath="fonts/IRANSansMobile.ttf"
                     android:id="@+id/rg_txt_verify_sms"
                     android:layout_width="0dp"
                     android:layout_height="match_parent"
@@ -373,11 +376,11 @@
                     android:gravity="center_vertical"
                     android:singleLine="true"
                     android:text="@{fragmentRegisterViewModel.callBackTxtVerifySms}"
-                    android:textAppearance="@{fragmentRegisterViewModel.txtVerifySmsAppearance}"
                     android:textColor="@{fragmentRegisterViewModel.txtVerifySmsColor}"
                     android:textSize="@dimen/dp13" />
 
                   <TextView
+                    fontPath="fonts/IRANSansMobile.ttf"
                     android:id="@+id/rg_txt_verify_timer"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
@@ -419,12 +422,12 @@
                     android:visibility="@{fragmentRegisterViewModel.imgVerifyKeyVisibility}" />
 
                   <TextView
+                    fontPath="fonts/IRANSansMobile.ttf"
                     android:id="@+id/rg_txt_verify_key"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:text="@{fragmentRegisterViewModel.callBackTxtVerifyKey}"
-                    android:textAppearance="@{fragmentRegisterViewModel.txtVerifyKeyAppearance}"
                     android:textColor="@{fragmentRegisterViewModel.txtVerifyKeColor}"
                     android:textSize="@dimen/dp13" />
 
@@ -458,12 +461,12 @@
                     android:visibility="@{fragmentRegisterViewModel.imgVerifyServerVisibility}" />
 
                   <TextView
+                    fontPath="fonts/IRANSansMobile.ttf"
                     android:id="@+id/rg_txt_verify_server"
                     android:layout_width="wrap_content"
                     android:layout_height="match_parent"
                     android:gravity="center_vertical"
                     android:text="@string/rg_verify_register4"
-                    android:textAppearance="@{fragmentRegisterViewModel.txtVerifyServerAppearance}"
                     android:textColor="@{fragmentRegisterViewModel.txtVerifyServerColor}"
                     android:textSize="@dimen/dp13" />
 
@@ -471,6 +474,7 @@
               </LinearLayout>
 
               <TextView
+                fontPath="fonts/IRANSansMobile.ttf"
                 android:id="@+id/txtAgreement_register"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -503,6 +507,7 @@
             android:visibility="@{fragmentRegisterViewModel.rootCheckPasswordVisibility ,default = gone}">
 
             <TextView
+              fontPath="fonts/IRANSansMobile.ttf"
               android:layout_width="match_parent"
               android:layout_height="wrap_content"
               android:layout_marginTop="@dimen/dp32"
@@ -525,6 +530,7 @@
 
 
             <TextView
+              fontPath="fonts/IRANSansMobile.ttf"
               android:id="@+id/rg_txtForgotPassword"
               android:layout_width="wrap_content"
               android:layout_height="wrap_content"

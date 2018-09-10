@@ -14,6 +14,7 @@ import android.support.v7.widget.CardView;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 
 import com.hanks.library.AnimateCheckBox;
 import com.mikepenz.fastadapter.items.AbstractItem;
@@ -21,6 +22,9 @@ import com.mikepenz.fastadapter.items.AbstractItem;
 import net.iGap.G;
 import net.iGap.R;
 import net.iGap.fragments.FragmentChat;
+import net.iGap.helper.ImageHelper;
+import net.iGap.interfaces.OnRotateImage;
+import net.iGap.module.AttachFile;
 import net.iGap.module.structs.StructBottomSheet;
 
 import java.util.List;
@@ -59,8 +63,33 @@ public class AdapterBottomSheet extends AbstractItem<AdapterBottomSheet, Adapter
     @Override
     public void bindView(final ViewHolder holder, List payloads) {
         super.bindView(holder, payloads);
+        
+        ImageHelper.correctRotateImage(mList.getPath(), true, new OnRotateImage() {
+            @Override
+            public void startProcess() {
+                G.handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        holder.prgBottomSheet.setVisibility(View.VISIBLE);
+                    }
+                });
 
-        G.imageLoader.displayImage("file://" + mList.getPath(), holder.imgSrc);
+            }
+
+            @Override
+            public void success(String newPath) {
+                G.handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        holder.prgBottomSheet.setVisibility(View.GONE);
+                        G.imageLoader.displayImage("file://" + newPath, holder.imgSrc);
+                    }
+                });
+
+            }
+        }); //rotate image
+        
+
 
         if (mList.isSelected) {
             holder.checkBoxSelect.setChecked(false);
@@ -76,12 +105,12 @@ public class AdapterBottomSheet extends AbstractItem<AdapterBottomSheet, Adapter
                 if (holder.checkBoxSelect.isChecked()) {
                     holder.checkBoxSelect.setChecked(false);
                     holder.checkBoxSelect.setUnCheckColor(G.context.getResources().getColor(R.color.transparent));
-                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), false, false);
+                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), false, false, mList, mList.getId());
                     mList.setSelected(true);
                 } else {
                     holder.checkBoxSelect.setChecked(true);
                     holder.checkBoxSelect.setUnCheckColor(G.context.getResources().getColor(R.color.green));
-                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), true, false);
+                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), true, false, mList, mList.getId());
                     mList.setSelected(false);
                 }
             }
@@ -93,12 +122,12 @@ public class AdapterBottomSheet extends AbstractItem<AdapterBottomSheet, Adapter
                 if (holder.checkBoxSelect.isChecked()) {
                     holder.checkBoxSelect.setChecked(false);
                     holder.checkBoxSelect.setUnCheckColor(G.context.getResources().getColor(R.color.transparent));
-                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), false, true);
+                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), false, true, mList, mList.getId());
                     mList.setSelected(false);
                 } else {
                     holder.checkBoxSelect.setChecked(true);
                     holder.checkBoxSelect.setUnCheckColor(G.context.getResources().getColor(R.color.green));
-                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), true, true);
+                    FragmentChat.onPathAdapterBottomSheet.path(mList.getPath(), true, true, mList, mList.getId());
                     mList.setSelected(true);
                 }
 
@@ -117,6 +146,7 @@ public class AdapterBottomSheet extends AbstractItem<AdapterBottomSheet, Adapter
         protected AnimateCheckBox checkBoxSelect;
         private CardView cr;
         private ImageView imgSrc;
+        private ProgressBar prgBottomSheet;
 
         public ViewHolder(View view) {
             super(view);
@@ -124,6 +154,7 @@ public class AdapterBottomSheet extends AbstractItem<AdapterBottomSheet, Adapter
             cr = (CardView) view.findViewById(R.id.card_view);
             imgSrc = (ImageView) view.findViewById(R.id.img_gallery);
             checkBoxSelect = (AnimateCheckBox) view.findViewById(R.id.cig_checkBox_select_user);
+            prgBottomSheet = (ProgressBar) view.findViewById(R.id.prgBottomSheet);
         }
     }
 

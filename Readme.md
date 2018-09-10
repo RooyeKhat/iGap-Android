@@ -1,3 +1,9 @@
+![Release 0.9.6](https://img.shields.io/badge/release-v0.9.6-blue.svg)
+![Build: Passing](https://img.shields.io/badge/build-passing-brightgreen.svg)
+![Android LibVersion 25](https://img.shields.io/badge/AndroidLib-25-orange.svg)
+![Platform Android](https://img.shields.io/badge/Platform-Android-lightgrey.svg)
+![AGPL 3.0](https://img.shields.io/badge/license-AGPL%203.0-blue.svg)
+
 ## iGap messenger for Android
 iGap is a messaging application and has been created using all latest modern technologies. iGap allows all users and programmers to use all its features, possibilities and potentials.
 

@@ -1,12 +1,12 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.fragments;
 
@@ -34,6 +34,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 
 import net.iGap.G;
 import net.iGap.R;
+import net.iGap.activities.ActivityMain;
 import net.iGap.databinding.ActivityNewGroupBinding;
 import net.iGap.helper.HelperAvatar;
 import net.iGap.helper.HelperFragment;
@@ -53,6 +54,7 @@ import net.iGap.module.AttachFile;
 import net.iGap.module.CircleImageView;
 import net.iGap.module.FileUploadStructure;
 import net.iGap.module.LinedEditText;
+import net.iGap.module.structs.StructBottomSheet;
 import net.iGap.proto.ProtoGlobal;
 import net.iGap.realm.RealmUserInfo;
 import net.iGap.viewmodel.FragmentNewGroupViewModel;
@@ -61,6 +63,7 @@ import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 
 import io.realm.Realm;
 
@@ -104,7 +107,7 @@ public class FragmentNewGroup extends BaseFragment implements OnGroupAvatarRespo
 
         FragmentEditImage.completeEditImage = new FragmentEditImage.CompleteEditImage() {
             @Override
-            public void result(String path, String message) {
+            public void result(String path, String message, HashMap<String, StructBottomSheet> textImageList) {
 
                 pathSaveImage = path;
                 avatarId = System.nanoTime();
@@ -317,9 +320,9 @@ public class FragmentNewGroup extends BaseFragment implements OnGroupAvatarRespo
             public void onFocusChange(View view, boolean b) {
 
                 if (b) {
-                    ViewGroupName.setBackgroundColor(G.context.getResources().getColor(R.color.toolbar_background));
+                    ViewGroupName.setBackgroundColor(Color.parseColor(G.appBarColor));
                 } else {
-                    ViewGroupName.setBackgroundColor(G.context.getResources().getColor(R.color.line_edit_text));
+                    ViewGroupName.setBackgroundColor(Color.parseColor(G.lineBorder));
                 }
             }
         });
@@ -445,20 +448,34 @@ public class FragmentNewGroup extends BaseFragment implements OnGroupAvatarRespo
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        /**
+         * If it's in the app and the screen lock is activated after receiving the result of the camera and .... The page code is displayed.
+         * The wizard will  be set ActivityMain.isUseCamera = true to prevent the page from being opened....
+         */
+        if (G.isPassCode) ActivityMain.isUseCamera = true;
+
+        if (FragmentEditImage.textImageList != null) FragmentEditImage.textImageList.clear();
+        if (FragmentEditImage.itemGalleryList != null) FragmentEditImage.itemGalleryList.clear();
+
         if (requestCode == AttachFile.request_code_TAKE_PICTURE && resultCode == Activity.RESULT_OK) {// result for camera
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 ImageHelper.correctRotateImage(AttachFile.mCurrentPhotoPath, true); //rotate image
-                new HelperFragment(FragmentEditImage.newInstance(AttachFile.mCurrentPhotoPath, false, false)).setReplace(false).load();
+
+                FragmentEditImage.insertItemList(AttachFile.mCurrentPhotoPath, false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
 
 
             } else {
                 ImageHelper.correctRotateImage(AttachFile.imagePath, true); //rotate image
-                new HelperFragment(FragmentEditImage.newInstance(AttachFile.imagePath, false, false)).setReplace(false).load();
+                FragmentEditImage.insertItemList(AttachFile.imagePath, false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
             }
         } else if (requestCode == request_code_image_from_gallery_single_select && resultCode == Activity.RESULT_OK) {// result for gallery
             if (data != null) {
-                new HelperFragment(FragmentEditImage.newInstance(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), false, false)).setReplace(false).load();
+                ImageHelper.correctRotateImage(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), true);
+                FragmentEditImage.insertItemList(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
             }
         }
     }

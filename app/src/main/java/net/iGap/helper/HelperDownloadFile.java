@@ -10,6 +10,8 @@
 
 package net.iGap.helper;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.support.annotation.NonNull;
 import android.support.v4.util.ArrayMap;
 
@@ -27,6 +29,7 @@ import net.iGap.G;
 import net.iGap.interfaces.OnFileDownloadResponse;
 import net.iGap.module.AndroidUtils;
 import net.iGap.proto.ProtoFileDownload;
+import net.iGap.proto.ProtoGlobal;
 import net.iGap.realm.RealmAttachment;
 import net.iGap.realm.RealmAttachmentFields;
 import net.iGap.request.RequestFileDownload;
@@ -36,7 +39,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.ConcurrentModificationException;
-import java.util.Iterator;
 import java.util.Map;
 
 import io.realm.Realm;
@@ -44,147 +46,46 @@ import io.realm.RealmResults;
 
 public class HelperDownloadFile {
 
-    public static ArrayList<String> manuallyStoppedDownload = new ArrayList<>();
-    private static ArrayMap<String, StructDownLoad> list = new ArrayMap<>();
-    private static ArrayList<StructQueue> mQueue = new ArrayList<>();
-    private static int maxDownloadSize = 2;
-    private OnFileDownloadResponse onFileDownloadResponse;
+    public interface UpdateListener {
+        void OnProgress(String path, int progress);
 
-
-    public HelperDownloadFile() {
-
-        onFileDownloadResponse = new OnFileDownloadResponse() {
-            @Override
-            public void onFileDownload(String cashId, long offset, ProtoFileDownload.FileDownload.Selector selector, int progress) {
-
-                finishDownload(cashId, offset, selector, progress);
-
-            }
-
-            @Override
-            public void onError(int majorCode, int minorCode, String cashId, ProtoFileDownload.FileDownload.Selector selector) {
-                errorDownload(cashId, selector);
-            }
-        };
-
-        G.onFileDownloadResponse = onFileDownloadResponse;
+        void OnError(String token);
     }
 
-    private static void errorDownload(String cashId, ProtoFileDownload.FileDownload.Selector selector) {
-        String primaryKey = cashId + selector;
+    public class StructListener {
+        public UpdateListener listener;
+        public String messageId;
 
-        if (list.size() > 0 && list.containsKey(primaryKey)) {
-            StructDownLoad item = list.get(primaryKey);
-
-            item.attampOnError--;
-            if (item.attampOnError >= 0) {
-                requestDownloadFile(item);
-            } else {
-
-                for (StructListener mItem : item.structListeners) {
-                    if (mItem.listener != null) {
-                        mItem.listener.OnError(item.Token);
-                    }
-                }
-
-                list.remove(primaryKey);
-
-                // if (selector == ProtoFileDownload.FileDownload.Selector.FILE) {
-                addDownloadFromQueue();
-                //  }
-            }
+        StructListener(UpdateListener listener, String messageId) {
+            this.listener = listener;
+            this.messageId = messageId;
         }
     }
 
-    private static void finishDownload(String cashId, long offset, ProtoFileDownload.FileDownload.Selector selector, int progress) {
-        String PrimaryKey = cashId + selector;
+    private static HelperDownloadFile helperDownloadFile;
+    public ArrayList<String> manuallyStoppedDownload = new ArrayList<>();
+    private ArrayMap<String, StructDownLoad> list = new ArrayMap<>();
+    private ArrayList<StructQueue> mQueue = new ArrayList<>();
+    private Handler handler;
+    private final static int maxDownloadSize = 4;
 
-        if (list.size() > 0 && list.containsKey(PrimaryKey)) {
-            StructDownLoad item = list.get(PrimaryKey);
-            item.offset = offset;
-            item.progress = progress;
+    //**********************************************************************************************
 
-            if (item.selector == ProtoFileDownload.FileDownload.Selector.FILE) {
-
-                if (mQueue.size() > 0) {
-                    if (mQueue.get(0).priority > item.priority) {
-
-                        if (item.priority < 3) {
-                            ++item.priority;
-                        }
-
-                        addItemToQueue(item.cashId + item.selector, item.priority);
-                        addDownloadFromQueue();
-                        return;
-                    }
-                }
-            }
-
-            requestDownloadFile(item);
+    public static HelperDownloadFile getInstance() {
+        if (helperDownloadFile == null) {
+            helperDownloadFile = new HelperDownloadFile();
         }
+        return helperDownloadFile;
     }
 
-
-    private static boolean isNeedItemGoToQueue() {
-
-        if (mQueue.size() > 0 || list.size() > maxDownloadSize) {
-            return true;
-        }
-
-        return false;
-
-
-   /*     int count = 0;
-
-        for (int i = 0; i < list.size(); i++) {
-
-            StructDownLoad _sd = list.valueAt(i);
-            // if (_sd.selector == ProtoFileDownload.FileDownload.Selector.FILE){
-            count++;
-            //  }
-        }
-
-        if ((count) > maxDownloadSize) return true;
-
-        return false;*/
-    }
-
-    private static void addItemToQueue(String primaryKey, int priority) {
-
-        boolean additem = false;
-
-        StructQueue sq = new StructQueue();
-        sq.priority = priority;
-        sq.primaryKey = primaryKey;
-
-        for (int i = mQueue.size() - 1; i >= 0; i--) {
-            try {
-                if (priority > mQueue.get(i).priority) {
-                    continue;
-                } else {
-                    if (mQueue.size() >= (i + 1)) {
-                        mQueue.add(i + 1, sq);
-                        additem = true;
-                        break;
-                    }
-                }
-            } catch (NullPointerException | IndexOutOfBoundsException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (!additem) {
-            mQueue.add(0, sq);
-        }
-    }
-
-    public static void startDownload(String messageID, String token, String url, String cashId, String name, long size, ProtoFileDownload.FileDownload.Selector selector, String moveToDirectoryPAth, int periority, UpdateListener update) {
+    public void startDownload(ProtoGlobal.RoomMessageType type, String messageID, String token, String url, String cashId, String name, long size, ProtoFileDownload.FileDownload.Selector selector, String moveToDirectoryPAth, int periority, UpdateListener update) {
         StructDownLoad item;
         String primaryKey = cashId + selector;
 
         if (!list.containsKey(primaryKey)) {
 
             item = new StructDownLoad();
+            item.type = type;
             item.Token = token;
             item.url = url;
             item.cashId = cashId;
@@ -282,8 +183,7 @@ public class HelperDownloadFile {
 
     }
 
-
-    public static void stopDownLoad(String cacheId) {
+    public void stopDownLoad(String cacheId) {
         manuallyStoppedDownload.add(cacheId);
 
         String primaryKey = cacheId + ProtoFileDownload.FileDownload.Selector.FILE;
@@ -298,7 +198,7 @@ public class HelperDownloadFile {
 
             }
 
-            if (item != null && item.structListeners != null) {
+            if (item.structListeners != null) {
                 for (StructListener mItem : item.structListeners) {
                     if (mItem.listener != null) {
                         item.isPause = true;
@@ -312,7 +212,153 @@ public class HelperDownloadFile {
         }
     }
 
-    private static void addDownloadFromQueue() {
+    public boolean isDownLoading(String cashID) {
+        String primaryKey = cashID + ProtoFileDownload.FileDownload.Selector.FILE;
+        return list.containsKey(primaryKey);
+    }
+
+    //**********************************************************************************************
+
+    private void getHandler() {
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Looper.prepare();
+
+                if (handler == null) {
+                    handler = new Handler();
+                }
+
+                Looper.loop();
+            }
+        }).start();
+
+    }
+
+    private HelperDownloadFile() {
+
+        getHandler();
+
+        G.onFileDownloadResponse = new OnFileDownloadResponse() {
+            @Override
+            public void onFileDownload(String cashId, long offset, ProtoFileDownload.FileDownload.Selector selector, int progress) {
+
+                finishDownload(cashId, offset, selector, progress);
+
+            }
+
+            @Override
+            public void onError(int majorCode, int minorCode, String cashId, ProtoFileDownload.FileDownload.Selector selector) {
+                errorDownload(cashId, selector);
+            }
+        };
+
+
+    }
+
+    private void errorDownload(String cashId, ProtoFileDownload.FileDownload.Selector selector) {
+        String primaryKey = cashId + selector;
+
+        if (list.size() > 0 && list.containsKey(primaryKey)) {
+            StructDownLoad item = list.get(primaryKey);
+
+            item.attampOnError--;
+            if (item.attampOnError >= 0) {
+                requestDownloadFile(item);
+            } else {
+
+                for (StructListener mItem : item.structListeners) {
+                    if (mItem.listener != null) {
+                        mItem.listener.OnError(item.Token);
+                    }
+                }
+
+                list.remove(primaryKey);
+
+                // if (selector == ProtoFileDownload.FileDownload.Selector.FILE) {
+                addDownloadFromQueue();
+                //  }
+            }
+        }
+    }
+
+    private void finishDownload(String cashId, long offset, ProtoFileDownload.FileDownload.Selector selector, int progress) {
+        String PrimaryKey = cashId + selector;
+
+        if (list.size() > 0 && list.containsKey(PrimaryKey)) {
+            StructDownLoad item = list.get(PrimaryKey);
+            item.offset = offset;
+            item.progress = progress;
+
+            if (item.selector == ProtoFileDownload.FileDownload.Selector.FILE) {
+
+                if (mQueue.size() > 0) {
+                    if (mQueue.get(0).priority > item.priority) {
+
+                        if (item.priority < 3) {
+                            ++item.priority;
+                        }
+
+                        addItemToQueue(item.cashId + item.selector, item.priority);
+                        addDownloadFromQueue();
+                        return;
+                    }
+                }
+            }
+
+            requestDownloadFile(item);
+        }
+    }
+
+    private boolean isNeedItemGoToQueue() {
+
+        return mQueue.size() > 0 || list.size() > maxDownloadSize;
+
+
+   /*     int count = 0;
+
+        for (int i = 0; i < list.size(); i++) {
+
+            StructDownLoad _sd = list.valueAt(i);
+            // if (_sd.selector == ProtoFileDownload.FileDownload.Selector.FILE){
+            count++;
+            //  }
+        }
+
+        if ((count) > maxDownloadSize) return true;
+
+        return false;*/
+    }
+
+    private void addItemToQueue(String primaryKey, int priority) {
+
+        boolean additem = false;
+
+        StructQueue sq = new StructQueue();
+        sq.priority = priority;
+        sq.primaryKey = primaryKey;
+
+        for (int i = mQueue.size() - 1; i >= 0; i--) {
+            try {
+                if (priority <= mQueue.get(i).priority) {
+                    if (mQueue.size() >= (i + 1)) {
+                        mQueue.add(i + 1, sq);
+                        additem = true;
+                        break;
+                    }
+                }
+            } catch (NullPointerException | IndexOutOfBoundsException e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (!additem) {
+            mQueue.add(0, sq);
+        }
+    }
+
+    private void addDownloadFromQueue() {
 
         // if any file exist in download queue add one to start download
 
@@ -329,8 +375,7 @@ public class HelperDownloadFile {
         }
     }
 
-
-    private static void startDownloadManager(final StructDownLoad item) {
+    private void startDownloadManager(final StructDownLoad item) {
 
         item.path = Utils.getTempPath(item.path, item.name);
         final String path = item.path.replace("/" + new File(item.path).getName(), "");
@@ -353,22 +398,54 @@ public class HelperDownloadFile {
                 .setOnCancelListener(new OnCancelListener() {
                     @Override
                     public void onCancel() {
+
                         stopDownLoad(item.cashId);
                     }
                 })
                 .setOnProgressListener(new OnProgressListener() {
                     @Override
                     public void onProgress(Progress progress) {
+
                         item.progress = (int) ((progress.currentBytes * 100) / progress.totalBytes);
+                        long downloadByte = progress.currentBytes - item.downloadedByte;
+                        item.downloadedByte = progress.currentBytes;
                         if (item.progress < 100 && !item.isPause) {
                             updateView(item);
+                            try {
+                                boolean connectivityType = true;
+                                if (HelperCheckInternetConnection.currentConnectivityType != null) {
+
+                                    if (HelperCheckInternetConnection.currentConnectivityType == HelperCheckInternetConnection.ConnectivityType.WIFI)
+                                        connectivityType = true;
+                                    else
+                                        connectivityType = false;
+                                }
+                                if (item.selector == ProtoFileDownload.FileDownload.Selector.FILE) {
+                                    HelperDataUsage.progressDownload(connectivityType, downloadByte, item.type);
+                                }
+                            } catch (Exception e) {
+                            }
+                            ;
                         }
                     }
                 })
                 .start(new OnDownloadListener() {
                     @Override
                     public void onDownloadComplete() {
-                        finishDownload(item.cashId, item.offset, item.selector, item.progress);
+
+                        try {
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    finishDownload(item.cashId, item.offset, item.selector, item.progress);
+                                    if (item.selector.toString().toLowerCase().contains("file") && HelperCheckInternetConnection.currentConnectivityType != null) {
+                                        HelperDataUsage.insertDataUsage(HelperDataUsage.convetredDownloadType, HelperCheckInternetConnection.currentConnectivityType == HelperCheckInternetConnection.ConnectivityType.WIFI, true);
+                                    }
+                                }
+                            });
+                        } catch (NullPointerException e) {
+                            HelperLog.setErrorLog("HelperDownloadFile  startDownloadManager  onDownloadComplete   " + e.toString());
+                        }
                     }
 
                     @Override
@@ -378,7 +455,7 @@ public class HelperDownloadFile {
                 });
     }
 
-    private static void requestDownloadFile(final StructDownLoad item) {
+    private void requestDownloadFile(final StructDownLoad item) {
 
         manuallyStoppedDownload.remove(item.cashId);
         if (item.progress == 100 || item.offset >= item.size) {
@@ -406,11 +483,11 @@ public class HelperDownloadFile {
         if (item.url != null && !item.url.isEmpty()) {
             startDownloadManager(item);
         } else {
-            new RequestFileDownload().download(item.Token, item.offset, (int) item.size, item.selector, new RequestFileDownload.IdentityFileDownload(item.cashId, item.path, item.selector, item.size, item.offset, true));
+            new RequestFileDownload().download(item.Token, item.offset, (int) item.size, item.selector, new RequestFileDownload.IdentityFileDownload(item.type, item.cashId, item.path, item.selector, item.size, item.offset, true));
         }
     }
 
-    private static void moveTmpFileToOrginFolder(ProtoFileDownload.FileDownload.Selector selector, String cashId) {
+    private void moveTmpFileToOrginFolder(ProtoFileDownload.FileDownload.Selector selector, String cashId) {
 
         StructDownLoad item = list.get(cashId + selector);
 
@@ -438,7 +515,7 @@ public class HelperDownloadFile {
         }
     }
 
-    private static void setThumbnailPathDataBaseAttachment(final String cashID, final String path) {
+    private void setThumbnailPathDataBaseAttachment(final String cashID, final String path) {
 
         Realm realm = Realm.getDefaultInstance();
         realm.executeTransaction(new Realm.Transaction() {
@@ -454,12 +531,7 @@ public class HelperDownloadFile {
         realm.close();
     }
 
-    public static boolean isDownLoading(String cashID) {
-        String primaryKey = cashID + ProtoFileDownload.FileDownload.Selector.FILE;
-        return list.containsKey(primaryKey);
-    }
-
-    private static void setFilePAthToDataBaseAttachment(final String cashID, final String path) {
+    private void setFilePAthToDataBaseAttachment(final String cashID, final String path) {
 
         Realm realm = Realm.getDefaultInstance();
         realm.executeTransaction(new Realm.Transaction() {
@@ -475,7 +547,7 @@ public class HelperDownloadFile {
         realm.close();
     }
 
-    private static void updateView(final StructDownLoad item) {
+    private void updateView(final StructDownLoad item) {
         for (StructListener mItem : item.structListeners) {
             if (mItem.listener != null) {
                 String _path = item.moveToDirectoryPAth.length() > 0 ? item.moveToDirectoryPAth : item.path;
@@ -484,55 +556,38 @@ public class HelperDownloadFile {
         }
     }
 
-    public static boolean removeRequestQueue(String identity) {
-        for (Iterator<Map.Entry<String, RequestWrapper>> it = G.requestQueueMap.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<String, RequestWrapper> entry = it.next();
-
+    void removeRequestQueue(String identity) {
+        for (Map.Entry<String, RequestWrapper> entry : G.requestQueueMap.entrySet()) {
             if (entry.getValue().identity != null && entry.getValue().identity.toString().contains(identity)) {
                 G.requestQueueMap.remove(entry.getKey());
-                return true;
             }
         }
-        return false;
     }
 
-    public interface UpdateListener {
-        void OnProgress(String path, int progress);
+    private class StructDownLoad {
 
-        void OnError(String token);
-    }
-
-    public static class StructListener {
-        public UpdateListener listener;
-        public String messageId;
-
-        public StructListener(UpdateListener listener, String messageId) {
-            this.listener = listener;
-            this.messageId = messageId;
-        }
-    }
-
-    private static class StructDownLoad {
-
-        public String Token = "";
+        ProtoGlobal.RoomMessageType type;
+        String Token = "";
         public String url = "";
-        public int idDownload = 0;
-        public String cashId = "";
-        public ArrayList<StructListener> structListeners = new ArrayList<>();
+        int idDownload = 0;
+        String cashId = "";
+        ArrayList<StructListener> structListeners = new ArrayList<>();
         public int progress = 0;
         public long offset = 0;
         public String name = "";
-        public String moveToDirectoryPAth = "";
+        String moveToDirectoryPAth = "";
         public long size = 0;
         public String identity = "";
-        public int attampOnError = 2;
+        int attampOnError = 2;
         public ProtoFileDownload.FileDownload.Selector selector;
         public String path = "";
-        public int priority = 0;
-        public boolean isPause = false;
+        int priority = 0;
+        boolean isPause = false;
+        long downloadedByte = 0; // this field just used for CDN download
+
     }
 
-    private static class StructQueue {
+    private class StructQueue {
         String primaryKey;
         int priority;
     }

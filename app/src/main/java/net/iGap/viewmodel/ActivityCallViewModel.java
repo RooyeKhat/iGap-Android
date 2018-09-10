@@ -39,6 +39,7 @@ import net.iGap.module.AndroidUtils;
 import net.iGap.module.MusicPlayer;
 import net.iGap.module.enums.CallState;
 import net.iGap.proto.ProtoFileDownload;
+import net.iGap.proto.ProtoGlobal;
 import net.iGap.realm.RealmAttachment;
 import net.iGap.realm.RealmRegisteredInfo;
 import net.iGap.request.RequestSignalingGetLog;
@@ -478,7 +479,7 @@ public class ActivityCallViewModel {
             ProtoFileDownload.FileDownload.Selector se = ProtoFileDownload.FileDownload.Selector.FILE;
             String dirPath = AndroidUtils.getFilePathWithCashId(av.getCacheId(), av.getName(), G.DIR_IMAGE_USER, false);
 
-            HelperDownloadFile.startDownload(System.currentTimeMillis() + "", av.getToken(), av.getUrl(), av.getCacheId(), av.getName(), av.getSize(), se, dirPath, 4, new HelperDownloadFile.UpdateListener() {
+            HelperDownloadFile.getInstance().startDownload(ProtoGlobal.RoomMessageType.IMAGE,System.currentTimeMillis() + "", av.getToken(), av.getUrl(), av.getCacheId(), av.getName(), av.getSize(), se, dirPath, 4, new HelperDownloadFile.UpdateListener() {
                 @Override
                 public void OnProgress(final String path, int progress) {
                     if (progress == 100) {
@@ -507,10 +508,21 @@ public class ActivityCallViewModel {
 
         if (!isMuteAllMusic) {
             AudioManager am = (AudioManager) G.context.getSystemService(Context.AUDIO_SERVICE);
-            musicVolum = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-            am.setStreamMute(AudioManager.STREAM_MUSIC, true);
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
-            isMuteAllMusic = true;
+            if (am == null) {
+                return;
+            }
+            int result = am.requestAudioFocus(new AudioManager.OnAudioFocusChangeListener() {
+                @Override
+                public void onAudioFocusChange(int focusChange) {
+
+                }
+            }, AudioManager.STREAM_MUSIC, AudioManager.AUDIOFOCUS_GAIN);
+            if (result != AudioManager.AUDIOFOCUS_REQUEST_GRANTED) {
+                musicVolum = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                am.setStreamMute(AudioManager.STREAM_MUSIC, true);
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
+                isMuteAllMusic = true;
+            }
         }
     }
 
@@ -518,9 +530,11 @@ public class ActivityCallViewModel {
 
         if (isMuteAllMusic) {
             AudioManager am = (AudioManager) G.context.getSystemService(Context.AUDIO_SERVICE);
-            am.setStreamVolume(AudioManager.STREAM_MUSIC, musicVolum, 0);
-            am.setStreamMute(AudioManager.STREAM_MUSIC, false);
-            isMuteAllMusic = false;
+            if (am != null) {
+                am.setStreamVolume(AudioManager.STREAM_MUSIC, musicVolum, 0);
+                am.setStreamMute(AudioManager.STREAM_MUSIC, false);
+                isMuteAllMusic = false;
+            }
         }
     }
 

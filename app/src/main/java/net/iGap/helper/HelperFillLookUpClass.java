@@ -1,21 +1,21 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.helper;
 
-import net.iGap.fragments.FragmentQrCodeNewDevice;
 import net.iGap.fragments.FragmentShowAvatars;
 import net.iGap.fragments.FragmentShowImage;
 
 import static net.iGap.G.forcePriorityActionId;
 import static net.iGap.G.generalImmovableClasses;
+import static net.iGap.G.ignoreErrorCodes;
 import static net.iGap.G.lookupMap;
 import static net.iGap.G.priorityActionId;
 import static net.iGap.G.unLogin;
@@ -34,6 +34,7 @@ public class HelperFillLookUpClass {
         HelperFillLookUpClass.fillWaitingRequestActionIdAllowed();
         HelperFillLookUpClass.fillPriorityActionId();
         HelperFillLookUpClass.fillForcePriorityActionId();
+        HelperFillLookUpClass.fillIgnoreErrorCodes();
     }
 
     /**
@@ -197,6 +198,7 @@ public class HelperFillLookUpClass {
         lookupMap.put(30614, "ProtoClientMuteRoom.ClientMuteRoomResponse");
         lookupMap.put(30615, "ProtoClientPinRoom.ClientPinRoomResponse");
         lookupMap.put(30616, "ProtoClientRoomReport.ClientRoomReportResponse");
+        lookupMap.put(30617, "ProtoClientRegisterDevice.ClientRegisterDeviceResponse");
 
         // FileUpload,Download 7xx , 307xx
         lookupMap.put(30700, "ProtoFileUploadOption.FileUploadOptionResponse");
@@ -235,11 +237,24 @@ public class HelperFillLookUpClass {
         lookupMap.put(31006, "ProtoGeoGetNearbyCoordinate.GeoGetNearbyCoordinateResponse");
         lookupMap.put(31007, "ProtoGeoGetConfiguration.GeoGetConfigurationResponse");
 
+        //Wallet 90xx
+        lookupMap.put(39000, "ProtoWalletGetAccessToken.WalletGetAccessTokenResponse");
+        lookupMap.put(39001, "ProtoWalletPaymentInit.WalletPaymentInitResponse");
+        lookupMap.put(39002, "ProtoWalletRegister.WalletRegisterResponse");
+        lookupMap.put(39003, "ProtoWalletIdMapping.WalletIdMappingResponse");
+
+        //Mpl 90xx
+        lookupMap.put(39100, "ProtoMplGetBillToken.MplGetBillTokenResponse");
+        lookupMap.put(39101, "ProtoMplGetTopupToken.MplGetTopupTokenResponse");
+        lookupMap.put(39200, "ProtoBillInquiryMci.BillInquiryMciResponse");
+        lookupMap.put(39201, "ProtoBillInquiryTelecom.BillInquiryTelecomResponse");
+
         // Push 600xx
         lookupMap.put(60000, "ProtoPushLoginToken.PushLoginTokenResponse");
         lookupMap.put(60001, "ProtoPushTwoStepVerification.PushTwoStepVerificationResponse");
         lookupMap.put(60002, "ProtoPushUserInfoExpired.PushUserInfoExpiredResponse");
         lookupMap.put(60003, "ProtoPushRateSignaling.PushRateSignalingResponse");
+        lookupMap.put(60004, "ProtoPushWalletPaymentVerified.PushWalletPaymentVerifiedResponse");
 
     }
 
@@ -287,7 +302,6 @@ public class HelperFillLookUpClass {
     private static void fillImmovableClasses() {
         generalImmovableClasses.add(FragmentShowAvatars.class.getName());
         generalImmovableClasses.add(FragmentShowImage.class.getName());
-        generalImmovableClasses.add(FragmentQrCodeNewDevice.class.getName());
     }
 
     /**
@@ -318,5 +332,10 @@ public class HelperFillLookUpClass {
     private static void fillForcePriorityActionId() {
         forcePriorityActionId.add(210);
         forcePriorityActionId.add(319);
+    }
+
+    private static void fillIgnoreErrorCodes() {
+        ignoreErrorCodes.add(5); // timeout
+        ignoreErrorCodes.add(617); // get room history not found
     }
 }

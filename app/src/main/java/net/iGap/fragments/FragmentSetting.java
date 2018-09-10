@@ -3,10 +3,10 @@ package net.iGap.fragments;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.content.res.Configuration;
 import android.databinding.DataBindingUtil;
 import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,10 +14,12 @@ import android.provider.MediaStore;
 import android.support.annotation.Nullable;
 import android.support.design.widget.AppBarLayout;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.widget.CompoundButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -26,6 +28,7 @@ import com.afollestad.materialdialogs.MaterialDialog;
 
 import net.iGap.G;
 import net.iGap.R;
+import net.iGap.activities.ActivityMain;
 import net.iGap.databinding.FragmentSettingBinding;
 import net.iGap.helper.HelperAvatar;
 import net.iGap.helper.HelperFragment;
@@ -46,6 +49,7 @@ import net.iGap.module.AttachFile;
 import net.iGap.module.EmojiTextViewE;
 import net.iGap.module.FileUploadStructure;
 import net.iGap.module.SUID;
+import net.iGap.module.structs.StructBottomSheet;
 import net.iGap.proto.ProtoGlobal;
 import net.iGap.request.RequestUserAvatarAdd;
 import net.iGap.request.RequestUserProfileGetBio;
@@ -55,6 +59,7 @@ import net.iGap.viewmodel.FragmentSettingViewModel;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.HashMap;
 
 import io.realm.Realm;
 
@@ -142,37 +147,9 @@ public class FragmentSetting extends BaseFragment implements OnUserAvatarRespons
             }
         };
 
-        //***********************
-        GradientDrawable bgShape = (GradientDrawable) fragmentSettingBinding.asnImgTitleBarColor.getBackground();
-        bgShape.setColor(Color.parseColor(G.appBarColor));
 
-        //***********************
-
-        GradientDrawable bgShapeNotification = (GradientDrawable) fragmentSettingBinding.asnImgNotificationColor.getBackground();
-        bgShapeNotification.setColor(Color.parseColor(G.notificationColor));
-
-        //***********************
-
-        GradientDrawable bgShapeToggleBottomColor = (GradientDrawable) fragmentSettingBinding.asnImgToggleBottonColor.getBackground();
-        bgShapeToggleBottomColor.setColor(Color.parseColor(G.toggleButtonColor));
-
-         /*
-          page for show all image user
-         */
-        GradientDrawable bgShapeSendAndAttachColor = (GradientDrawable) fragmentSettingBinding.asnImgSendAndAttachColor.getBackground();
-        bgShapeSendAndAttachColor.setColor(Color.parseColor(G.attachmentColor));
-
-
-        //***********************
-
-        GradientDrawable bgShapeHeaderTextColor = (GradientDrawable) fragmentSettingBinding.asnImgDefaultHeaderFontColor.getBackground();
-        bgShapeHeaderTextColor.setColor(Color.parseColor(G.headerTextColor));
-
-        //***********************
-
-        GradientDrawable bgShapeProgressColor = (GradientDrawable) fragmentSettingBinding.asnImgDefaultProgressColor.getBackground();
-        bgShapeProgressColor.setColor(Color.parseColor(G.progressColor));
-
+        fragmentSettingBinding.stFabSetPic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(G.fabBottom)));
+        fragmentSettingBinding.stFabSetPic.setColorFilter(Color.WHITE);
 
         fragmentSettingBinding.stFabSetPic.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -216,7 +193,7 @@ public class FragmentSetting extends BaseFragment implements OnUserAvatarRespons
 
         FragmentEditImage.completeEditImage = new FragmentEditImage.CompleteEditImage() {
             @Override
-            public void result(String path, String message) {
+            public void result(String path, String message, HashMap<String, StructBottomSheet> textImageList) {
 
                 pathSaveImage = path;
                 long lastUploadedAvatarId = idAvatar + 1L;
@@ -308,20 +285,40 @@ public class FragmentSetting extends BaseFragment implements OnUserAvatarRespons
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+        /**
+         * If it's in the app and the screen lock is activated after receiving the result of the camera and .... The page code is displayed.
+         * The wizard will  be set ActivityMain.isUseCamera = true to prevent the page from being opened....
+         */
+        if (G.isPassCode) ActivityMain.isUseCamera = true;
+
+        if (FragmentEditImage.textImageList != null) FragmentEditImage.textImageList.clear();
+        if (FragmentEditImage.itemGalleryList != null) FragmentEditImage.itemGalleryList.clear();
+
+
         if (requestCode == AttachFile.request_code_TAKE_PICTURE && resultCode == RESULT_OK) {// result for camera
+
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                 ImageHelper.correctRotateImage(AttachFile.mCurrentPhotoPath, true); //rotate image
-                new HelperFragment(FragmentEditImage.newInstance(AttachFile.mCurrentPhotoPath, false, false)).setReplace(false).load();
+
+                FragmentEditImage.insertItemList(AttachFile.mCurrentPhotoPath, false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
             } else {
                 ImageHelper.correctRotateImage(pathSaveImage, true); //rotate image
-                new HelperFragment(FragmentEditImage.newInstance(pathSaveImage, false, false)).setReplace(false).load();
+
+                FragmentEditImage.insertItemList(pathSaveImage, false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
             }
         } else if (requestCode == request_code_image_from_gallery_single_select && resultCode == RESULT_OK) {// result for gallery
             if (data != null) {
                 if (data.getData() == null) {
                     return;
                 }
-                new HelperFragment(FragmentEditImage.newInstance(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), false, false)).setReplace(false).load();
+                ImageHelper.correctRotateImage(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), true);
+
+                FragmentEditImage.insertItemList(AttachFile.getFilePathFromUriAndCheckForAndroid7(data.getData(), HelperGetDataFromOtherApp.FileType.image), false);
+                new HelperFragment(FragmentEditImage.newInstance(null, false, false, 0)).setReplace(false).load();
             }
         }
     }
@@ -434,6 +431,8 @@ public class FragmentSetting extends BaseFragment implements OnUserAvatarRespons
         return mRealm;
     }
 
+    private int counterCheckAvatar = 0;
+
     private void setAvatar() {
         HelperAvatar.getAvatar(fragmentSettingViewModel.userId, HelperAvatar.AvatarType.USER, true, new OnAvatarGet() {
             @Override
@@ -441,7 +440,13 @@ public class FragmentSetting extends BaseFragment implements OnUserAvatarRespons
                 G.handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        G.imageLoader.displayImage(AndroidUtils.suitablePath(avatarPath), fragmentSettingBinding.stImgCircleImage);
+
+                        if (avatarPath != null) {
+                            G.imageLoader.displayImage(AndroidUtils.suitablePath(avatarPath), fragmentSettingBinding.stImgCircleImage);
+                        } else if (counterCheckAvatar < 4) {
+                            setAvatar();
+                            counterCheckAvatar++;
+                        }
                     }
                 });
             }

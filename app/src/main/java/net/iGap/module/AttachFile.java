@@ -1,12 +1,12 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.module;
 
@@ -206,8 +206,6 @@ public class AttachFile {
             return null;
         }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-
             try {
                 String name = AttachFile.getFileName(uri.getPath());
                 if (name == null || name.length() == 0) {
@@ -244,7 +242,7 @@ public class AttachFile {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
+
 
         return null;
     }
@@ -894,7 +892,16 @@ public class AttachFile {
         // Create an image file name
         String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
         String imageFileName = "JPEG_" + timeStamp + "_";
+
         File storageDir = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM), "Camera");
+
+        if (!Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).exists()) {
+            new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM).getPath()).mkdirs();
+        }
+
+        if (!storageDir.exists()) {
+            storageDir.mkdir();
+        }
         File image = File.createTempFile(imageFileName,  /* prefix */
                 ".jpg",         /* suffix */
                 storageDir      /* directory */);

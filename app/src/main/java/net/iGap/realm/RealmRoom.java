@@ -1,15 +1,16 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.realm;
 
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.Looper;
 import android.text.format.DateUtils;
@@ -22,6 +23,7 @@ import net.iGap.interfaces.OnClientGetRoomMessage;
 import net.iGap.module.enums.ChannelChatRole;
 import net.iGap.module.enums.GroupChatRole;
 import net.iGap.module.enums.RoomType;
+import net.iGap.module.structs.StructMessageOption;
 import net.iGap.proto.ProtoGlobal;
 import net.iGap.request.RequestClientGetRoom;
 import net.iGap.request.RequestClientGetRoomMessage;
@@ -183,7 +185,7 @@ public class RealmRoom extends RealmObject {
          * set setFirstUnreadMessage
          */
         if (room.hasFirstUnreadMessage()) {
-            RealmRoomMessage realmRoomMessage = RealmRoomMessage.putOrUpdate(room.getFirstUnreadMessage(), room.getId(), false, false, realm);
+            RealmRoomMessage realmRoomMessage = RealmRoomMessage.putOrUpdate(realm, room.getId(), room.getFirstUnreadMessage(), new StructMessageOption());
             realmRoomMessage.setFutureMessageId(room.getFirstUnreadMessage().getMessageId());
             realmRoom.setFirstUnreadMessage(realmRoomMessage);
         }
@@ -196,7 +198,7 @@ public class RealmRoom extends RealmObject {
             if (!RealmRoomMessage.existMessage(room.getLastMessage().getMessageId())) {
                 setGap = true;
             }
-            RealmRoomMessage realmRoomMessage = RealmRoomMessage.putOrUpdate(room.getLastMessage(), room.getId(), false, false, realm);
+            RealmRoomMessage realmRoomMessage = RealmRoomMessage.putOrUpdate(realm, room.getId(), room.getLastMessage(), new StructMessageOption());
             if (setGap) {
                 realmRoomMessage.setPreviousMessageId(room.getLastMessage().getMessageId());
                 realmRoomMessage.setFutureMessageId(room.getLastMessage().getMessageId());
@@ -839,7 +841,7 @@ public class RealmRoom extends RealmObject {
 
     public static void setLastScrollPosition(final long roomId, final long messageId, final int offset) {
         Realm realm = Realm.getDefaultInstance();
-        realm.executeTransaction(new Realm.Transaction() {
+        realm.executeTransactionAsync(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
                 RealmRoom realmRoom = realm.where(RealmRoom.class).equalTo(RealmRoomFields.ID, roomId).findFirst();
@@ -848,8 +850,17 @@ public class RealmRoom extends RealmObject {
                     realmRoom.setLastScrollPositionOffset(offset);
                 }
             }
+        }, new Realm.Transaction.OnSuccess() {
+            @Override
+            public void onSuccess() {
+                realm.close();
+            }
+        }, new Realm.Transaction.OnError() {
+            @Override
+            public void onError(Throwable error) {
+                realm.close();
+            }
         });
-        realm.close();
     }
 
     public static void clearAllScrollPositions() {
@@ -905,7 +916,7 @@ public class RealmRoom extends RealmObject {
 
     public static void clearDraft(final long roomId) {
         Realm realm = Realm.getDefaultInstance();
-        realm.executeTransaction(new Realm.Transaction() {
+        realm.executeTransactionAsync(new Realm.Transaction() {
             @Override
             public void execute(Realm realm) {
                 RealmRoom realmRoom = realm.where(RealmRoom.class).equalTo(RealmRoomFields.ID, roomId).findFirst();
@@ -914,8 +925,17 @@ public class RealmRoom extends RealmObject {
                     realmRoom.setDraftFile(null);
                 }
             }
+        }, new Realm.Transaction.OnSuccess() {
+            @Override
+            public void onSuccess() {
+                realm.close();
+            }
+        }, new Realm.Transaction.OnError() {
+            @Override
+            public void onError(Throwable error) {
+                realm.close();
+            }
         });
-        realm.close();
     }
 
     /**

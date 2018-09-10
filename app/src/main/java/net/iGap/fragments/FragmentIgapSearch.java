@@ -1,17 +1,18 @@
 /*
-* This is the source code of iGap for Android
-* It is licensed under GNU AGPL v3.0
-* You should have received a copy of the license in this archive (see LICENSE).
-* Copyright © 2017 , iGap - www.iGap.net
-* iGap Messenger | Free, Fast and Secure instant messaging application
-* The idea of the RooyeKhat Media Company - www.RooyeKhat.co
-* All rights reserved.
-*/
+ * This is the source code of iGap for Android
+ * It is licensed under GNU AGPL v3.0
+ * You should have received a copy of the license in this archive (see LICENSE).
+ * Copyright © 2017 , iGap - www.iGap.net
+ * iGap Messenger | Free, Fast and Secure instant messaging application
+ * The idea of the RooyeKhat Media Company - www.RooyeKhat.co
+ * All rights reserved.
+ */
 
 package net.iGap.fragments;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.widget.ContentLoadingProgressBar;
@@ -21,6 +22,7 @@ import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
 import android.text.InputType;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -50,6 +52,8 @@ import net.iGap.realm.RealmRoom;
 import net.iGap.realm.RealmRoomFields;
 import net.iGap.request.RequestClientSearchUsername;
 
+import org.paygear.wallet.WalletActivity;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -69,6 +73,7 @@ public class FragmentIgapSearch extends BaseFragment {
     private ContentLoadingProgressBar loadingProgressBar;
     private ImageView imvNothingFound;
     private long index = 2000;
+    private String preventRepeatSearch = "";
 
     public static FragmentIgapSearch newInstance() {
         return new FragmentIgapSearch();
@@ -110,7 +115,7 @@ public class FragmentIgapSearch extends BaseFragment {
         }, 150);
 
         loadingProgressBar = (ContentLoadingProgressBar) view.findViewById(R.id.sfl_progress_loading);
-        loadingProgressBar.getIndeterminateDrawable().setColorFilter(G.context.getResources().getColor(R.color.toolbar_background), android.graphics.PorterDuff.Mode.MULTIPLY);
+        loadingProgressBar.getIndeterminateDrawable().setColorFilter(Color.parseColor(G.progressColor), PorterDuff.Mode.SRC_IN);
 
         edtSearch = (EditText) view.findViewById(R.id.sfl_edt_search);
 
@@ -143,9 +148,7 @@ public class FragmentIgapSearch extends BaseFragment {
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
 
-                itemAdapter.clear();
-
-                int strSize = edtSearch.getText().toString().trim().length();
+                int strSize = edtSearch.getText().toString().length();
 
                 // filter some character
                 if (strSize > 1) {
@@ -157,10 +160,13 @@ public class FragmentIgapSearch extends BaseFragment {
                 }
 
                 if (strSize > 5) {
-
-                    if (G.userLogin) {
-                        new RequestClientSearchUsername().clientSearchUsername(edtSearch.getText().toString().substring(1));
-                        loadingProgressBar.setVisibility(View.VISIBLE);
+                    if (G.userLogin ) {
+                        if ((!edtSearch.getText().toString().equals(preventRepeatSearch))){
+                            itemAdapter.clear();
+                            new RequestClientSearchUsername().clientSearchUsername(edtSearch.getText().toString().substring(1));
+                            loadingProgressBar.setVisibility(View.VISIBLE);
+                            preventRepeatSearch = edtSearch.getText().toString();
+                        }
                     } else {
                         HelperError.showSnackMessage(G.context.getString(R.string.there_is_no_connection_to_server), false);
                     }
